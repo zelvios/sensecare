@@ -1,0 +1,65 @@
+name: sensecare
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sensecare-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data          # persists across restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - internal
+
+  api:
+    build:
+      context: ./backend
+    container_name: sensecare-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      API_BIND_ADDR: 0.0.0.0:8080
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8080}:8080"                  # room devices reaches the API here
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ./frontend
+    container_name: sensecare-web
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:8080                    # internal network. browser never calls api
+      ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      PORT: 3000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    networks:
+      - internal
+
+volumes:
+  db-data:
+
+networks:
+  internal:
