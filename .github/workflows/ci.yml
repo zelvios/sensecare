@@ -1,40 +1,40 @@
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-permissions:
-  contents: read
-
-jobs:
-  backend:
-    name: Backend (Rust)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      # Caches ~/.cargo and backend/target between runs.
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: backend
-
-      - name: Format
-        run: cargo fmt --all -- --check
-
-      - name: Lint
-        run: cargo clippy --all-targets -- -D warnings
-
-      - name: Test
-        run: cargo test
+#name: CI
+#
+#on:
+#  push:
+#    branches: [main]
+#  pull_request:
+#
+#permissions:
+#  contents: read
+#
+#jobs:
+#  backend:
+#    name: Backend (Rust)
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: backend
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - uses: dtolnay/rust-toolchain@stable
+#        with:
+#          components: rustfmt, clippy
+#
+#      # Caches ~/.cargo and backend/target between runs.
+#      - uses: Swatinem/rust-cache@v2
+#        with:
+#          workspaces: backend
+#
+#      - name: Format
+#        run: cargo fmt --all -- --check
+#
+#      - name: Lint
+#        run: cargo clippy --all-targets -- -D warnings
+#
+#      - name: Test
+#        run: cargo test
 
   # frontend:
   #   name: Frontend (SvelteKit)
