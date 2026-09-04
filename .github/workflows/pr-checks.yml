@@ -17,7 +17,7 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          pattern='^(feature|bugfix|hotfix|release|chore|docs)/[a-z0-9._-]+$'
+          pattern='^(feature|bugfix|hotfix|release|chore|docs|ci)/[a-z0-9._-]+$'
           if [[ "$BRANCH" =~ $pattern ]]; then
             echo "OK: $BRANCH"
           else
