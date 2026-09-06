@@ -30,6 +30,9 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       API_BIND_ADDR: 0.0.0.0:8080
       RUST_LOG: ${RUST_LOG:-info}
+      APP_ENV: ${APP_ENV:-development}            # production on the server
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy
