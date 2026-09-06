@@ -5,15 +5,17 @@
 //!   service_calls – K2
 //!   devices       – K8, K9, K10
 
+mod auth;
+
 use axum::{Json, Router, routing::get};
 use serde_json::{Value, json};
 
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
-    Router::new().route("/", get(index))
-    // .nest("/auth", auth::router())
-    // .nest("/rooms", rooms::router())
+    Router::new()
+        .route("/", get(index))
+        .nest("/auth", auth::router())
 }
 
 async fn index() -> Json<Value> {

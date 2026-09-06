@@ -31,6 +31,13 @@ pub async fn build_app(config: Config) -> anyhow::Result<axum::Router> {
 
     let pool = db::create_pool(&config.database_url, config.db_pool_size)
         .context("could not create DB pool")?;
+    if let Some(password) = &config.bootstrap_admin_password {
+        let mut conn = pool.get().await?;
+        if services::auth::bootstrap_admin(&mut conn, password).await? {
+            tracing::warn!("created bootstrap admin user 'admin' — change its password!");
+        }
+    }
+    
     let state = AppState::new(pool, config);
     Ok(routes::router(state))
 }
