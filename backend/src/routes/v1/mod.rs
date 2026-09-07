@@ -7,6 +7,7 @@
 
 mod auth;
 mod audit;
+mod users;
 
 use axum::{Json, Router, routing::get};
 use serde_json::{Value, json};
@@ -18,6 +19,7 @@ pub fn router() -> Router<AppState> {
         .route("/", get(index))
         .nest("/auth", auth::router())
         .nest("/audit-log", audit::router())
+        .nest("/users", users::router())
 }
 
 async fn index() -> Json<Value> {
