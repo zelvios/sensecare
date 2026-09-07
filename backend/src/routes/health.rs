@@ -1,9 +1,9 @@
 //! GET /health
 //!
-//! Proves three things at once: the process is up, it can borrow a pooled connection, and 
+//! Proves three things at once: the process is up, it can borrow a pooled connection, and
 //! Postgres answers. Docker's healthcheck polls this: `web` won't start until it passes.
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{Json, Router, extract::State, routing::get};
 use diesel_async::RunQueryDsl;
 use serde::Serialize;
 

@@ -5,8 +5,8 @@
 //!   service_calls – K2
 //!   devices       – K8, K9, K10
 
-mod auth;
 mod audit;
+mod auth;
 mod users;
 
 use axum::{Json, Router, routing::get};
