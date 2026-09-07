@@ -27,3 +27,10 @@ pub struct NewUser<'a> {
     pub password_hash: &'a str,
     pub role_id: i16,
 }
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = users)]
+pub struct UserUpdate<'a> {
+    pub display_name: Option<&'a str>,
+    pub role_id: Option<i16>,
+}
