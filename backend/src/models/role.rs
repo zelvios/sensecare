@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
     Client,
@@ -39,6 +39,8 @@ pub enum Permission {
     ManageClients,
     /// create, edit, deactivate accounts with the `staff` or `admin` role
     ManageStaff,
+    /// permanently delete an account that was created by mistake (`admin` only)
+    DeleteUsers,
 
     // --- governance ---
     /// read the audit log
