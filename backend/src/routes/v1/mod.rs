@@ -6,6 +6,7 @@
 //!   devices       – K8, K9, K10
 
 mod auth;
+mod audit;
 
 use axum::{Json, Router, routing::get};
 use serde_json::{Value, json};
@@ -16,6 +17,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(index))
         .nest("/auth", auth::router())
+        .nest("/audit-log", audit::router())
 }
 
 async fn index() -> Json<Value> {
