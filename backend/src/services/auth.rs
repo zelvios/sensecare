@@ -10,11 +10,13 @@ use crate::{
     db::DbConn,
     error::ApiError,
     models::{
+        audit::AuditAction,
         role::{Permission, Role},
         session::NewSession,
         user::NewUser,
     },
     repos,
+    services::audit,
 };
 
 /// What every authenticated request knows about the caller.
@@ -157,7 +159,8 @@ pub async fn bootstrap_admin(conn: &mut DbConn, password: &str) -> Result<bool, 
     }
     let hash = hash_password(password.to_owned()).await?;
     let role_id = repos::users::role_id_by_name(conn, Role::Admin.as_str()).await?;
-    repos::users::insert(
+
+    let user = repos::users::insert(
         conn,
         &NewUser {
             username: "admin",
@@ -165,6 +168,15 @@ pub async fn bootstrap_admin(conn: &mut DbConn, password: &str) -> Result<bool, 
             password_hash: &hash,
             role_id,
         },
+    )
+    .await?;
+
+    audit::record(
+        conn,
+        None,
+        AuditAction::UserCreated,
+        &user.id,
+        Some(serde_json::json!({ "bootstrap": true })),
     )
     .await?;
     Ok(true)
