@@ -1,6 +1,21 @@
-# SenseCare
+<h1 align="center">SenseCare</h1>
+<h3 align="center">━━━━━━  ❖  ━━━━━━</h3>
 
-IoT platform for monitoring indoor climate and handling service calls in hospital rooms.
+<p align="center">IoT platform for indoor climate monitoring and service calls in hospital rooms.</p>
+
+<!-- BADGES -->
+<div align="center">
+
+[![ci](https://img.shields.io/github/actions/workflow/status/zelvios/sensecare/ci.yml?branch=main&label=ci&labelColor=1A1B26&color=9ece6a&style=for-the-badge)](https://github.com/zelvios/sensecare/actions/workflows/ci.yml)
+[![license](https://img.shields.io/github/license/zelvios/sensecare?color=FCA2AA&labelColor=1A1B26&style=for-the-badge)](https://github.com/zelvios/sensecare/blob/main/LICENSE)
+
+[![issues](https://img.shields.io/github/issues/zelvios/sensecare?labelColor=1A1B26&color=e0af68&style=for-the-badge)](https://github.com/zelvios/sensecare/issues)
+[![last commit](https://img.shields.io/github/last-commit/zelvios/sensecare?labelColor=1A1B26&color=7aa2f7&style=for-the-badge)](https://github.com/zelvios/sensecare/commits/main)
+[![size](https://img.shields.io/github/repo-size/zelvios/sensecare?color=9ece6a&labelColor=1A1B26&style=for-the-badge)](https://github.com/zelvios/sensecare)
+
+</div>
+
+### Info Stack
 - Rust API (axum + Diesel)
 - SvelteKit frontend
 - PostgreSQL
