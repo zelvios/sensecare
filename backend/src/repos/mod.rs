@@ -1,3 +1,3 @@
+pub mod audit;
 pub mod sessions;
 pub mod users;
-pub mod audit;

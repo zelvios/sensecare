@@ -2,7 +2,7 @@
 //!
 //!   /api/v1/audit-log/user/4a5f…                       everything done to that account
 //!   /api/v1/audit-log/room/7c1e…                       everything done to that room
-//! 
+//!
 //! GET /api/v1/audit-log   (ViewAuditLog)  -> newest entries first, paged
 //!
 //! Query parameters, all optional and combinable:
@@ -61,7 +61,14 @@ async fn list(
     user.require(Permission::ViewAuditLog)?;
     let limit = q.limit.clamp(1, 200);
     let mut conn = state.pool.get().await?;
-    let entries = repos::audit::list(&mut conn, q.entity_type.as_deref(), q.actor_id, limit, q.offset.max(0)).await?;
+    let entries = repos::audit::list(
+        &mut conn,
+        q.entity_type.as_deref(),
+        q.actor_id,
+        limit,
+        q.offset.max(0),
+    )
+    .await?;
     Ok(Json(entries))
 }
 

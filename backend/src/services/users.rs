@@ -5,7 +5,7 @@
 //!   - nobody deactivates, deletes or demotes their own account
 //!   - hard delete needs `DeleteUsers` and is refused by the database if the
 //!     user is referenced anywhere (stays, alarms, …)
-//! Every mutation writes one audit entry.
+//!   - every mutation writes one audit entry.
 
 use serde_json::json;
 use uuid::Uuid;

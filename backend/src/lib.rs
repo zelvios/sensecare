@@ -37,7 +37,7 @@ pub async fn build_app(config: Config) -> anyhow::Result<axum::Router> {
             tracing::warn!("created bootstrap admin user 'admin' — change its password!");
         }
     }
-    
+
     let state = AppState::new(pool, config);
     Ok(routes::router(state))
 }
