@@ -52,7 +52,6 @@ pub struct Config {
     pub api_docs: bool,
 }
 
-
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
         let environment: Environment = std::env::var("APP_ENV")
