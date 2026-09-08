@@ -88,7 +88,7 @@ async fn logout(
     CurrentUser(user): CurrentUser,
 ) -> Result<StatusCode, ApiError> {
     let mut conn = state.pool.get().await?;
-    services::auth::logout(&mut conn, user.session_id).await?;
+    services::auth::logout(&mut conn, &user).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

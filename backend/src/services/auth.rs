@@ -4,6 +4,7 @@ use argon2::{
 };
 use chrono::{Duration, Utc};
 use serde::Serialize;
+use serde_json::json;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -80,18 +81,36 @@ pub async fn login(
     user_agent: Option<&str>,
     ttl_hours: i64,
 ) -> Result<(Uuid, AuthenticatedUser), ApiError> {
-    let Some((user, role_name)) = repos::users::find_by_username(conn, username).await? else {
+    let username = username.trim().to_lowercase();
+
+    let Some((user, role_name)) = repos::users::find_by_username(conn, &username).await? else {
         // Burn the same time as a real verification so timing doesn't leak existence.
         let _ = verify_password(password.to_owned(), DUMMY_HASH.to_owned()).await;
+        tracing::warn!(target: "audit", username = %username, "login attempt for unknown user");
         return Err(ApiError::Unauthorized);
     };
 
     if !verify_password(password.to_owned(), user.password_hash.clone()).await? {
+        audit::record(
+            conn,
+            None,
+            AuditAction::UserLoginFailed,
+            &user.id,
+            Some(json!({ "user_agent": user_agent })),
+        )
+        .await?;
         return Err(ApiError::Unauthorized);
     }
-    // Only reached with a correct password, so this reveals nothing to a guesser
-    // and tells a real user why they can't get in.
+
     if !user.is_active {
+        audit::record(
+            conn,
+            None,
+            AuditAction::UserLoginRefused,
+            &user.id,
+            Some(json!({ "user_agent": user_agent })),
+        )
+        .await?;
         return Err(ApiError::AccountDeactivated);
     }
 
@@ -108,20 +127,36 @@ pub async fn login(
     .await?;
     repos::users::touch_last_login(conn, user.id).await?;
 
-    Ok((
-        session.id,
-        AuthenticatedUser {
-            id: user.id,
-            username: user.username,
-            display_name: user.display_name,
-            role,
-            session_id: session.id,
-        },
-    ))
+    let authenticated = AuthenticatedUser {
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name,
+        role,
+        session_id: session.id,
+    };
+
+    audit::record(
+        conn,
+        Some(&authenticated),
+        AuditAction::UserLoggedIn,
+        &authenticated.id,
+        Some(json!({ "session_id": session.id, "user_agent": user_agent })),
+    )
+    .await?;
+
+    Ok((session.id, authenticated))
 }
 
-pub async fn logout(conn: &mut DbConn, session_id: Uuid) -> Result<(), ApiError> {
-    repos::sessions::delete(conn, session_id).await?;
+pub async fn logout(conn: &mut DbConn, user: &AuthenticatedUser) -> Result<(), ApiError> {
+    repos::sessions::delete(conn, user.session_id).await?;
+    audit::record(
+        conn,
+        Some(user),
+        AuditAction::UserLoggedOut,
+        &user.id,
+        Some(json!({ "session_id": user.session_id })),
+    )
+    .await?;
     Ok(())
 }
 

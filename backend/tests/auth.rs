@@ -83,3 +83,57 @@ async fn deactivated_account_loses_its_session() {
     assert_eq!(login.status(), StatusCode::FORBIDDEN);
     assert_eq!(json(login).await["error"], "account_deactivated");
 }
+
+#[tokio::test]
+async fn logins_and_failures_are_audited() {
+    let app = TestApp::spawn().await;
+    let admin = app.admin_token().await;
+    let (id, _) = app
+        .create_user("patient1", "patient-pass-1", "client")
+        .await;
+
+    // wrong password
+    let bad = app
+        .post(
+            "/api/v1/auth/login",
+            None,
+            Some(serde_json::json!({ "username": "patient1", "password": "wrong-pass-1" })),
+        )
+        .await;
+    assert_eq!(bad.status(), StatusCode::UNAUTHORIZED);
+
+    // logout from the session created by create_user
+    let token = app.login("patient1", "patient-pass-1").await;
+    app.post::<()>("/api/v1/auth/logout", Some(&token), None)
+        .await;
+
+    let history = json(
+        app.get(&format!("/api/v1/audit-log/user/{id}"), Some(&admin))
+            .await,
+    )
+    .await;
+    let actions: Vec<_> = history
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["action"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        actions,
+        vec![
+            "user.created",
+            "user.logged_in",
+            "user.login_failed",
+            "user.logged_in",
+            "user.logged_out"
+        ]
+    );
+
+    let logged_in = history
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["action"] == "user.logged_in")
+        .unwrap();
+    assert!(logged_in["details"]["session_id"].is_string());
+}
