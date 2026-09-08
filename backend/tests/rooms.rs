@@ -156,3 +156,46 @@ async fn update_and_deactivate_are_audited() {
         vec!["room.created", "room.updated", "room.deactivated"]
     );
 }
+
+#[tokio::test]
+async fn only_admin_can_hard_delete_rooms() {
+    let app = TestApp::spawn().await;
+    let admin = app.admin_token().await;
+    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let id = json(
+        app.post("/api/v1/rooms", Some(&admin), Some(room("12")))
+            .await,
+    )
+    .await["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+
+    assert_eq!(
+        app.delete(&format!("/api/v1/rooms/{id}"), Some(&staff))
+            .await
+            .status(),
+        StatusCode::FORBIDDEN
+    );
+    assert_eq!(
+        app.delete(&format!("/api/v1/rooms/{id}"), Some(&admin))
+            .await
+            .status(),
+        StatusCode::NO_CONTENT
+    );
+    assert_eq!(
+        app.get(&format!("/api/v1/rooms/{id}"), Some(&admin))
+            .await
+            .status(),
+        StatusCode::NOT_FOUND
+    );
+
+    let history = json(
+        app.get(&format!("/api/v1/audit-log/room/{id}"), Some(&admin))
+            .await,
+    )
+    .await;
+    let last = history.as_array().unwrap().last().unwrap();
+    assert_eq!(last["action"], "room.deleted");
+    assert_eq!(last["details"]["room_number"], "12");
+}
