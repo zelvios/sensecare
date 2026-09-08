@@ -78,3 +78,11 @@ pub async fn set_active(conn: &mut DbConn, id: Uuid, active: bool) -> QueryResul
         .await
         .map(|_| ())
 }
+
+/// Hard delete. Fails with a foreign-key violation if anything still references the room.
+pub async fn delete(conn: &mut DbConn, id: Uuid) -> QueryResult<()> {
+    diesel::delete(rooms::table.find(id))
+        .execute(conn)
+        .await
+        .map(|_| ())
+}

@@ -3,6 +3,8 @@
 //!   - creating, editing, deactivating needs `ManageRooms` (admin)
 //!   - rooms are never hard-deleted and measurements, stays and calls reference them
 //!   - every mutation writes one audit entry.
+//!   - hard delete needs `DeleteRooms` (admin) and is refused by the database if the room is
+//!     referenced by devices, stays, measurements or calls
 
 use serde_json::json;
 use uuid::Uuid;
@@ -168,6 +170,32 @@ pub async fn set_active(
         AuditAction::RoomDeactivated
     };
     audit::record(conn, Some(actor), action, &id, None).await?;
+    Ok(())
+}
+
+pub async fn delete(
+    conn: &mut DbConn,
+    actor: &AuthenticatedUser,
+    id: Uuid,
+) -> Result<(), ApiError> {
+    actor.require(Permission::DeleteRooms)?;
+    let room = repos::rooms::find_by_id(conn, id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+
+    // Anything referencing the room makes this fail with a foreign-key violation,
+    // which error.rs turns into 400 invalid_reference.
+    repos::rooms::delete(conn, id).await?;
+
+    // The row is gone, so the audit entry carries a snapshot of what it was.
+    audit::record(
+        conn,
+        Some(actor),
+        AuditAction::RoomDeleted,
+        &id,
+        Some(json!({ "room_number": room.room_number, "name": room.name, "floor": room.floor })),
+    )
+    .await?;
     Ok(())
 }
 

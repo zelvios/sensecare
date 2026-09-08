@@ -6,6 +6,7 @@
 //! PATCH  /api/v1/rooms/{id}               room_number/name/floor ManageRooms
 //! POST   /api/v1/rooms/{id}/deactivate                           ManageRooms
 //! POST   /api/v1/rooms/{id}/activate                             ManageRooms
+//! DELETE /api/v1/rooms/{id}               hard delete            DeleteRooms (admin)
 //!
 //! Query parameters for the list, all optional:
 //!   q        matches room number or name, case-insensitive
@@ -35,7 +36,7 @@ use crate::{
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(list, create))
-        .routes(routes!(get_one, update))
+        .routes(routes!(get_one, update, delete))
         .routes(routes!(deactivate))
         .routes(routes!(activate))
 }
@@ -209,5 +210,27 @@ async fn activate(
 ) -> Result<StatusCode, ApiError> {
     let mut conn = state.pool.get().await?;
     rooms::set_active(&mut conn, &actor, id, true).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Permanently delete a room (admin only). Refused if anything still references it.
+#[utoipa::path(
+    delete, path = "/{id}", tag = "rooms", operation_id = "delete_room",
+    params(("id" = Uuid, Path)),
+    responses(
+        (status = 204),
+        (status = 400, description = "Still referenced by devices, stays, measurements or calls", body = ErrorResponse),
+        (status = 403, body = ErrorResponse),
+        (status = 404, body = ErrorResponse),
+    ),
+    security(("bearer" = []))
+)]
+async fn delete(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, ApiError> {
+    let mut conn = state.pool.get().await?;
+    rooms::delete(&mut conn, &actor, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
