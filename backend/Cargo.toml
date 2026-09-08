@@ -27,3 +27,6 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 uuid = { version = "1.26.0", features = ["v4", "serde"] }
 time = "0.3.55"
 argon2 = { version = "0.5", features = ["std"] }
+utoipa = { version = "5.5.0", features = ["axum_extras", "uuid", "chrono"] }
+utoipa-axum = "0.2.0"
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
