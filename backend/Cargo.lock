@@ -1367,6 +1367,7 @@ dependencies = [
  "anyhow",
  "argon2",
  "axum",
+ "bigdecimal",
  "chrono",
  "diesel",
  "diesel-async",

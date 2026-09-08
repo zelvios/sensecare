@@ -23,6 +23,8 @@ use utoipa::{
         (name = "users", description = "Account management: staff manage clients, admins manage everyone"),
         (name = "rooms", description = "Room management: staff read, admins manage"),
         (name = "devices", description = "Room nodes: registration, keys and device authentication"),
+        (name = "stays", description = "Which client occupies which room: check-in and check-out"),
+        (name = "measurements", description = "Temperature and humidity: reported by devices, read per room"),
         (name = "audit", description = "Audit log (admin)"),
     ),
     modifiers(&SecurityAddon)

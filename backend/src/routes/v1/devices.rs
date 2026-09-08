@@ -10,6 +10,7 @@
 //! POST   /api/v1/devices/{id}/deactivate                             ManageDevices
 //! POST   /api/v1/devices/{id}/activate                               ManageDevices
 //! DELETE /api/v1/devices/{id}               hard delete              DeleteDevices (admin)
+//! POST   /api/v1/devices/measurements       report a reading         X-Device-Id + X-Device-Key
 
 use axum::{
     Json,
@@ -26,7 +27,9 @@ use crate::{
     error::{ApiError, ErrorResponse},
     models::device::Device,
     routes::extractors::{CurrentUser, DeviceAuth},
+    routes::v1::measurements::{MeasurementRequest, MeasurementResponse},
     services::devices::{self, DeviceWithKey, ListParams},
+    services::measurements::{self, Reading},
     state::AppState,
 };
 
@@ -34,6 +37,7 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(list, register))
         .routes(routes!(self_info))
+        .routes(routes!(report_measurement))
         .routes(routes!(get_one, update, delete))
         .routes(routes!(assign))
         .routes(routes!(rotate_key))
@@ -336,4 +340,31 @@ async fn delete(
     let mut conn = state.pool.get().await?;
     devices::delete(&mut conn, &actor, id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Report a temperature and humidity reading. The device must be assigned to a room.
+#[utoipa::path(
+    post, path = "/measurements", tag = "measurements", operation_id = "report_measurement",
+    request_body = MeasurementRequest,
+    responses(
+        (status = 201, body = MeasurementResponse),
+        (status = 400, description = "Value out of range or timestamp in the future", body = ErrorResponse),
+        (status = 401, body = ErrorResponse),
+        (status = 409, description = "Device is not assigned to a room", body = ErrorResponse),
+    ),
+    security(("device_id" = [], "device_key" = []))
+)]
+async fn report_measurement(
+    State(state): State<AppState>,
+    DeviceAuth(device): DeviceAuth,
+    Json(body): Json<MeasurementRequest>,
+) -> Result<(StatusCode, Json<MeasurementResponse>), ApiError> {
+    let mut conn = state.pool.get().await?;
+    let reading = Reading {
+        temperature_c: body.temperature_c,
+        humidity_pct: body.humidity_pct,
+        measured_at: body.measured_at,
+    };
+    let stored = measurements::ingest(&mut conn, &device, reading).await?;
+    Ok((StatusCode::CREATED, Json(stored.into())))
 }

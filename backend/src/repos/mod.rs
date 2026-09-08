@@ -1,5 +1,6 @@
 pub mod audit;
 pub mod devices;
+pub mod measurements;
 pub mod rooms;
 pub mod sessions;
 pub mod stays;

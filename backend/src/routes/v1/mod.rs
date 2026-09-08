@@ -1,13 +1,16 @@
-//! Versioned API. Feature routers get nested here as they are built:
-//!   auth          – K3, K11
-//!   rooms         – K5, K7
-//!   measurements  – K4, K6
-//!   service_calls – K2
-//!   devices       – K8, K9, K10
+//!   auth          login, logout, me                               K3, K11
+//!   users         account management                              K7
+//!   rooms         room management + measurement history           K5, K6, K7
+//!   devices       registration, key auth, measurement recording   K8, K9, K10
+//!   stays         check-in / check-out, own room                  K4, K11
+//!   audit-log     audit log
+//!   measurements  DTOs only, handlers live in rooms and devices
+//! Planned: service_calls (K2), alarms
 
 mod audit;
 mod auth;
 mod devices;
+mod measurements;
 mod rooms;
 mod stays;
 mod users;
