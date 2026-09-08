@@ -58,7 +58,7 @@ pub async fn list(conn: &mut DbConn, f: &UserFilter<'_>) -> QueryResult<Vec<User
         .into_boxed();
 
     if let Some(q) = f.q.map(str::trim).filter(|s| !s.is_empty()) {
-        let pattern = format!("%{}%", escape_like(q));
+        let pattern = format!("%{}%", super::escape_like(q));
         query = query.filter(
             users::username
                 .ilike(pattern.clone())
@@ -139,16 +139,4 @@ pub async fn role_id_by_name(conn: &mut DbConn, name: &str) -> QueryResult<i16> 
         .select(roles::id)
         .first(conn)
         .await
-}
-
-/// Prepares user input for the SQL `ILIKE` pattern used in `list`.
-///
-/// In SQL pattern matching, `%` means "any characters" and `_` means "any single
-/// character". If a user searches for "50%" or "j_hansen", those characters must be
-/// treated literally, so they are escaped with a backslash before being wrapped in
-/// `%…%` for the contains-match.
-fn escape_like(s: &str) -> String {
-    s.replace('\\', "\\\\")
-        .replace('%', "\\%")
-        .replace('_', "\\_")
 }
