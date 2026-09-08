@@ -24,10 +24,7 @@ pub fn router() -> OpenApiRouter<AppState> {
 }
 
 /// Liveness check with a database round-trip.
-#[utoipa::path(
-    get,
-    path = "/health",
-    tag = "health",
+#[utoipa::path(get, path = "/health", tag = "health", operation_id = "health",
     responses((status = 200, body = Health), (status = 500, body = crate::error::ErrorResponse))
 )]
 async fn health(State(state): State<AppState>) -> Result<Json<Health>, ApiError> {

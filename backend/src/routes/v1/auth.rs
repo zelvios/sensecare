@@ -47,10 +47,7 @@ pub struct LoginResponse {
 
 /// Log in. Returns the user and a session token.
 #[utoipa::path(
-    post,
-    path = "/login",
-    tag = "auth",
-    request_body = LoginRequest,
+    post, path = "/login",tag = "auth", request_body = LoginRequest, operation_id = "login",
     responses(
         (status = 200, body = LoginResponse),
         (status = 401, description = "Wrong username or password", body = ErrorResponse),
@@ -82,9 +79,7 @@ async fn login(
 
 /// Log out: deletes the session so the token stops working.
 #[utoipa::path(
-    post,
-    path = "/logout",
-    tag = "auth",
+    post, path = "/logout", tag = "auth", operation_id = "logout",
     responses((status = 204), (status = 401, body = ErrorResponse)),
     security(("bearer" = []))
 )]
@@ -99,9 +94,7 @@ async fn logout(
 
 /// The currently authenticated user.
 #[utoipa::path(
-    get,
-    path = "/me",
-    tag = "auth",
+    get, path = "/me", tag = "auth", operation_id = "me",
     responses((status = 200, body = AuthenticatedUser), (status = 401, body = ErrorResponse)),
     security(("bearer" = []))
 )]

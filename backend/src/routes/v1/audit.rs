@@ -59,9 +59,7 @@ fn default_limit() -> i64 {
 
 /// Newest audit entries first, optionally filtered by entity type and actor.
 #[utoipa::path(
-    get,
-    path = "/",
-    tag = "audit",
+    get, path = "/", tag = "audit", operation_id = "list_audit_log",
     params(AuditQuery),
     responses((status = 200, body = Vec<AuditEntry>), (status = 403, body = ErrorResponse)),
     security(("session_cookie" = []), ("bearer" = []))
@@ -87,9 +85,7 @@ async fn list(
 
 /// Full history of one record, oldest first.
 #[utoipa::path(
-    get,
-    path = "/{entity_type}/{entity_id}",
-    tag = "audit",
+    get, path = "/{entity_type}/{entity_id}", tag = "audit", operation_id = "audit_history",
     params(("entity_type" = String, Path), ("entity_id" = String, Path)),
     responses((status = 200, body = Vec<AuditEntry>), (status = 403, body = ErrorResponse)),
     security(("session_cookie" = []), ("bearer" = []))
