@@ -72,6 +72,16 @@ impl TestApp {
         self.send(Request::get(path), token, None::<()>).await
     }
 
+    /// GET authenticated as a device, with `X-Device-Id` and `X-Device-Key`.
+    pub async fn get_as_device(&self, path: &str, id: &str, key: &str) -> Response<Body> {
+        let request = Request::get(path)
+            .header("x-device-id", id)
+            .header("x-device-key", key)
+            .body(Body::empty())
+            .unwrap();
+        self.router.clone().oneshot(request).await.unwrap()
+    }
+
     pub async fn post<B: Serialize>(
         &self,
         path: &str,
@@ -113,7 +123,7 @@ impl TestApp {
         self.router.clone().oneshot(request).await.unwrap()
     }
 
-    // --- auth helpers ----
+    // --- setup helpers ----
 
     pub async fn login(&self, username: &str, password: &str) -> String {
         let res = self
@@ -150,6 +160,20 @@ impl TestApp {
         let id: Uuid = json(res).await["id"].as_str().unwrap().parse().unwrap();
         let token = self.login(username, password).await;
         (id, token)
+    }
+
+    /// Creates a room as admin and returns its id.
+    pub async fn create_room(&self, number: &str) -> Uuid {
+        let admin = self.admin_token().await;
+        let res = self
+            .post(
+                "/api/v1/rooms",
+                Some(&admin),
+                Some(serde_json::json!({ "room_number": number })),
+            )
+            .await;
+        assert_eq!(res.status(), StatusCode::CREATED);
+        json(res).await["id"].as_str().unwrap().parse().unwrap()
     }
 }
 
