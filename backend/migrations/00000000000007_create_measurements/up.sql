@@ -6,7 +6,7 @@ CREATE TABLE measurements
     temperature_c numeric(4, 1) NOT NULL,
     humidity_pct  numeric(4, 1) NOT NULL,
     measured_at   timestamptz   NOT NULL,
-    received_at   timestamptz   NOT NULL DEFAULT now(),
+    received_at   timestamptz   NOT NULL,
     CONSTRAINT measurements_temperature_plausible CHECK (temperature_c BETWEEN -40 AND 85),
     CONSTRAINT measurements_humidity_range CHECK (humidity_pct BETWEEN 0 AND 100)
 );
