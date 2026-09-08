@@ -14,3 +14,16 @@ pub(crate) fn escape_like(s: &str) -> String {
         .replace('%', "\\%")
         .replace('_', "\\_")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::escape_like;
+
+    #[test]
+    fn like_wildcards_are_escaped() {
+        assert_eq!(escape_like("50%"), "50\\%");
+        assert_eq!(escape_like("j_hansen"), "j\\_hansen");
+        assert_eq!(escape_like("a\\b"), "a\\\\b");
+        assert_eq!(escape_like("plain"), "plain");
+    }
+}
