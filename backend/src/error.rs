@@ -86,6 +86,15 @@ impl IntoResponse for ApiError {
                 "invalid_reference",
                 info.message().to_string(),
             ),
+            // A CHECK constraint failed, e.g. checked_out_at before checked_in_at.
+            ApiError::Database(DieselError::DatabaseError(
+                DatabaseErrorKind::CheckViolation,
+                info,
+            )) => (
+                StatusCode::BAD_REQUEST,
+                "constraint_violation",
+                info.message().to_string(),
+            ),
             ApiError::Database(e) => {
                 tracing::error!(error = %e, "database error");
                 (INTERNAL.0, INTERNAL.1, INTERNAL.2.to_string())
