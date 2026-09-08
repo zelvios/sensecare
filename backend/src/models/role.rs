@@ -36,6 +36,8 @@ pub enum Permission {
     ViewDevices,
     /// register devices, assign to rooms, rotate keys
     ManageDevices,
+    /// permanently delete a device that was registered by mistake (`admin` only)
+    DeleteDevices,
 
     // --- accounts ---
     /// create, edit, deactivate accounts with the `client` role
@@ -144,8 +146,10 @@ mod tests {
         assert!(!Role::Client.has(Permission::DeleteRooms));
         assert!(!Role::Staff.has(Permission::DeleteUsers));
         assert!(!Role::Staff.has(Permission::DeleteRooms));
+        assert!(!Role::Staff.has(Permission::DeleteDevices));
         assert!(Role::Admin.has(Permission::DeleteUsers));
         assert!(Role::Admin.has(Permission::DeleteRooms));
+        assert!(Role::Admin.has(Permission::DeleteDevices));
     }
 
     #[test]
