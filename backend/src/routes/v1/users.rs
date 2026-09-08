@@ -125,9 +125,7 @@ pub struct SetPasswordRequest {
 
 /// List or search accounts. Staff see clients only.
 #[utoipa::path(
-    get,
-    path = "/",
-    tag = "users",
+    get, path = "/", tag = "users", operation_id = "list_users",
     params(ListQuery),
     responses((status = 200, body = Vec<UserResponse>), (status = 403, body = ErrorResponse)),
     security(("session_cookie" = []), ("bearer" = []))
@@ -151,9 +149,7 @@ async fn list(
 
 /// Create an account. The requested role decides which permission is needed.
 #[utoipa::path(
-    post,
-    path = "/",
-    tag = "users",
+    post, path = "/", tag = "users", operation_id = "create_user",
     request_body = CreateUserRequest,
     responses(
         (status = 201, body = UserResponse),
@@ -183,9 +179,7 @@ async fn create(
 
 /// One account.
 #[utoipa::path(
-    get,
-    path = "/{id}",
-    tag = "users",
+    get, path = "/{id}", tag = "users", operation_id = "get_user",
     params(("id" = Uuid, Path)),
     responses(
         (status = 200, body = UserResponse),
@@ -205,9 +199,7 @@ async fn get_one(
 
 /// Change display name and/or role. A role change needs permission for both the old and new role.
 #[utoipa::path(
-    patch,
-    path = "/{id}",
-    tag = "users",
+    patch, path = "/{id}", tag = "users", operation_id = "update_user",
     params(("id" = Uuid, Path)),
     request_body = UpdateUserRequest,
     responses(
@@ -238,9 +230,7 @@ async fn update(
 
 /// Set a new password. Logs the account out everywhere.
 #[utoipa::path(
-    post,
-    path = "/{id}/password",
-    tag = "users",
+    post, path = "/{id}/password", tag = "users", operation_id = "set_user_password",
     params(("id" = Uuid, Path)),
     request_body = SetPasswordRequest,
     responses((status = 204), (status = 400, body = ErrorResponse), (status = 403, body = ErrorResponse)),
@@ -259,9 +249,7 @@ async fn set_password(
 
 /// Soft delete: the account can no longer log in and its sessions are removed.
 #[utoipa::path(
-    post,
-    path = "/{id}/deactivate",
-    tag = "users",
+    post, path = "/{id}/deactivate", tag = "users", operation_id = "deactivate_user",
     params(("id" = Uuid, Path)),
     responses(
         (status = 204),
@@ -282,9 +270,7 @@ async fn deactivate(
 
 /// Reactivate a deactivated account.
 #[utoipa::path(
-    post,
-    path = "/{id}/activate",
-    tag = "users",
+    post, path = "/{id}/activate", tag = "users", operation_id = "activate_user",
     params(("id" = Uuid, Path)),
     responses((status = 204), (status = 403, body = ErrorResponse)),
     security(("session_cookie" = []), ("bearer" = []))
@@ -301,9 +287,7 @@ async fn activate(
 
 /// Permanently delete an account (admin only). Refused if anything still references it.
 #[utoipa::path(
-    delete,
-    path = "/{id}",
-    tag = "users",
+    delete, path = "/{id}", tag = "users", operation_id = "delete_user",
     params(("id" = Uuid, Path)),
     responses(
         (status = 204),
