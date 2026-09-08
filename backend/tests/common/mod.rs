@@ -82,6 +82,23 @@ impl TestApp {
         self.router.clone().oneshot(request).await.unwrap()
     }
 
+    /// POST authenticated as a device, with a JSON body.
+    pub async fn post_as_device<B: Serialize>(
+        &self,
+        path: &str,
+        id: &str,
+        key: &str,
+        body: B,
+    ) -> Response<Body> {
+        let request = Request::post(path)
+            .header("x-device-id", id)
+            .header("x-device-key", key)
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(serde_json::to_vec(&body).unwrap()))
+            .unwrap();
+        self.router.clone().oneshot(request).await.unwrap()
+    }
+
     pub async fn post<B: Serialize>(
         &self,
         path: &str,
@@ -174,6 +191,24 @@ impl TestApp {
             .await;
         assert_eq!(res.status(), StatusCode::CREATED);
         json(res).await["id"].as_str().unwrap().parse().unwrap()
+    }
+
+    /// Registers a device as admin, optionally assigned to a room. Returns (device id, key).
+    pub async fn create_device(&self, room: Option<Uuid>) -> (String, String) {
+        let admin = self.admin_token().await;
+        let res = self
+            .post(
+                "/api/v1/devices",
+                Some(&admin),
+                Some(serde_json::json!({ "label": "node", "room_id": room })),
+            )
+            .await;
+        assert_eq!(res.status(), StatusCode::CREATED);
+        let v = json(res).await;
+        (
+            v["id"].as_str().unwrap().to_owned(),
+            v["key"].as_str().unwrap().to_owned(),
+        )
     }
 }
 
