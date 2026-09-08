@@ -12,29 +12,32 @@ jobs:
   backend:
     name: Backend (Rust)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sensecare
+          POSTGRES_PASSWORD: change-me
+          POSTGRES_DB: postgres
+        ports: [ "5433:5432" ]
+        options: --health-cmd "pg_isready -U sensecare" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_ADMIN_DATABASE_URL: postgres://sensecare:change-me@localhost:5433/postgres
     defaults:
       run:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-
-      # Caches ~/.cargo and backend/target between runs.
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
-
-      - name: Format
-        run: cargo fmt --all -- --check
-
-      - name: Lint
-        run: cargo clippy --all-targets -- -D warnings
-
-      - name: Test
-        run: cargo test
+      - uses: taiki-e/install-action@nextest
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo nextest run
 
   # frontend:
   #   name: Frontend (SvelteKit)

@@ -32,7 +32,7 @@ impl std::str::FromStr for Environment {
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    /// development or production. Drives CORS, cookie flags and validation.
+    /// development or production.
     pub environment: Environment,
     /// postgres://user:password@host:port/database
     pub database_url: String,
@@ -44,8 +44,6 @@ pub struct Config {
     pub web_origin: Option<String>,
     /// How long a session stays valid without activity.
     pub session_ttl_hours: i64,
-    /// Secure flag on the session cookie. Always true in production.
-    pub cookie_secure: bool,
     /// If set and the users table is empty, an admin account is created on startup.
     pub bootstrap_admin_password: Option<String>,
     /// Serve Swagger UI at /swagger-ui. Default on. Set API_DOCS=false to hide it.
@@ -84,8 +82,6 @@ impl Config {
             db_pool_size: env_or("DB_POOL_SIZE", 10),
             web_origin,
             session_ttl_hours: env_or("SESSION_TTL_HOURS", 12),
-            // Production always sets Secure. Development can also for testing behind a local proxy.
-            cookie_secure: environment == Environment::Production || env_or("COOKIE_SECURE", false),
             bootstrap_admin_password,
             api_docs: env_or("API_DOCS", true),
         })
