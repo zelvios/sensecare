@@ -1,3 +1,16 @@
 pub mod audit;
+pub mod rooms;
 pub mod sessions;
 pub mod users;
+
+/// Prepares user input for the SQL `ILIKE` pattern used in `list`.
+///
+/// In SQL pattern matching, `%` means "any characters" and `_` means "any single
+/// character". If a user searches for "50%" or "j_hansen", those characters must be
+/// treated literally, so they are escaped with a backslash before being wrapped in
+/// `%…%` for the contains-match.
+pub(crate) fn escape_like(s: &str) -> String {
+    s.replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_")
+}
