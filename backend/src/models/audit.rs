@@ -90,3 +90,27 @@ impl AuditAction {
         self.as_str().split('.').next().unwrap_or("unknown")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn action_strings_follow_entity_dot_verb() {
+        assert_eq!(AuditAction::UserDeactivated.as_str(), "user.deactivated");
+        assert_eq!(
+            AuditAction::ServiceCallClosed.as_str(),
+            "service_call.closed"
+        );
+    }
+
+    #[test]
+    fn entity_type_is_the_part_before_the_dot() {
+        assert_eq!(AuditAction::UserCreated.entity_type(), "user");
+        assert_eq!(AuditAction::RoomDeleted.entity_type(), "room");
+        assert_eq!(
+            AuditAction::ServiceCallAcknowledged.entity_type(),
+            "service_call"
+        );
+    }
+}

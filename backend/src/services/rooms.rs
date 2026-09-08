@@ -229,3 +229,33 @@ fn validate_floor(floor: Option<i16>) -> Result<(), ApiError> {
         _ => Ok(()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn room_number_rules() {
+        assert!(validate_room_number("12").is_ok());
+        assert!(validate_room_number("A-3.2").is_ok());
+        assert!(validate_room_number("").is_err());
+        assert!(validate_room_number("12 A").is_err(), "space");
+        assert!(validate_room_number(&"9".repeat(17)).is_err(), "too long");
+    }
+
+    #[test]
+    fn name_rules() {
+        assert!(validate_name(None).is_ok());
+        assert!(validate_name(Some("Stue 12")).is_ok());
+        assert!(validate_name(Some(&"x".repeat(65))).is_err());
+    }
+
+    #[test]
+    fn floor_rules() {
+        assert!(validate_floor(None).is_ok());
+        assert!(validate_floor(Some(0)).is_ok());
+        assert!(validate_floor(Some(-5)).is_ok());
+        assert!(validate_floor(Some(-6)).is_err());
+        assert!(validate_floor(Some(101)).is_err());
+    }
+}

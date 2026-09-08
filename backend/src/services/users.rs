@@ -323,3 +323,32 @@ fn validate_password(p: &str) -> Result<(), ApiError> {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn username_rules() {
+        assert!(validate_username("jacob").is_ok());
+        assert!(validate_username("j.jacob_2").is_ok());
+        assert!(validate_username("søren").is_ok());
+        assert!(validate_username("ab").is_err(), "too short");
+        assert!(validate_username(&"a".repeat(65)).is_err(), "too long");
+        assert!(validate_username("han sen").is_err(), "space");
+        assert!(validate_username("jacob@x").is_err(), "symbol");
+    }
+
+    #[test]
+    fn display_name_rules() {
+        assert!(validate_display_name("Sygeplejerske jacob").is_ok());
+        assert!(validate_display_name("").is_err());
+        assert!(validate_display_name(&"x".repeat(129)).is_err());
+    }
+
+    #[test]
+    fn password_rules() {
+        assert!(validate_password("abcdefghij").is_ok());
+        assert!(validate_password("short").is_err());
+    }
+}
