@@ -1,4 +1,5 @@
 pub mod audit;
+pub mod devices;
 pub mod rooms;
 pub mod sessions;
 pub mod users;
