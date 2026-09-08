@@ -1,53 +1,67 @@
-//! POST /api/v1/auth/login   {username, password} -> user and session cookie
+//! POST /api/v1/auth/login   {username, password} -> user and session token
 //! POST /api/v1/auth/logout  (authenticated)        -> deletes the session
 //! GET  /api/v1/auth/me      (authenticated)        -> the current user
+//!
+//! The API is bearer-only: the token from login is sent as `Authorization: Bearer <token>` on
+//! every request. The SvelteKit server keeps it in an HttpOnly cookie for the browser and
+//! the API itself sets no cookies.
 
 use axum::{
-    Json, Router,
+    Json,
     extract::State,
-    http::{StatusCode, header::USER_AGENT},
-    routing::{get, post},
-};
-use axum_extra::extract::{
-    CookieJar,
-    cookie::{Cookie, SameSite},
+    http::{HeaderMap, StatusCode, header::USER_AGENT},
 };
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    error::ApiError,
-    routes::extractors::{CurrentUser, SESSION_COOKIE},
+    error::{ApiError, ErrorResponse},
+    routes::extractors::CurrentUser,
     services::{self, auth::AuthenticatedUser},
     state::AppState,
 };
 
-pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/login", post(login))
-        .route("/logout", post(logout))
-        .route("/me", get(me))
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(login))
+        .routes(routes!(logout))
+        .routes(routes!(me))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {
+    #[schema(example = "admin")]
     pub username: String,
+    #[schema(example = "admin-change-me")]
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct LoginResponse {
     pub user: AuthenticatedUser,
-    /// The same token as the cookie, for the SvelteKit server to forward as
-    /// `Authorization: Bearer`. Never store this in browser JavaScript.
+    /// Send as `Authorization: Bearer <session_token>` on every request.
+    /// The SvelteKit server stores it in an HttpOnly cookie and never expose it to browser JavaScript.
     pub session_token: String,
 }
 
+/// Log in. Returns the user and a session token.
+#[utoipa::path(
+    post,
+    path = "/login",
+    tag = "auth",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, body = LoginResponse),
+        (status = 401, description = "Wrong username or password", body = ErrorResponse),
+        (status = 403, description = "Account deactivated", body = ErrorResponse),
+    )
+)]
 async fn login(
     State(state): State<AppState>,
-    jar: CookieJar,
-    headers: axum::http::HeaderMap,
+    headers: HeaderMap,
     Json(body): Json<LoginRequest>,
-) -> Result<(CookieJar, Json<LoginResponse>), ApiError> {
+) -> Result<Json<LoginResponse>, ApiError> {
     let user_agent = headers.get(USER_AGENT).and_then(|v| v.to_str().ok());
     let mut conn = state.pool.get().await?;
 
@@ -60,33 +74,37 @@ async fn login(
     )
     .await?;
 
-    let cookie = Cookie::build((SESSION_COOKIE, token.to_string()))
-        .http_only(true)
-        .secure(state.config.cookie_secure)
-        .same_site(SameSite::Strict)
-        .path("/")
-        .max_age(time::Duration::hours(state.config.session_ttl_hours))
-        .build();
-
-    Ok((
-        jar.add(cookie),
-        Json(LoginResponse {
-            user,
-            session_token: token.to_string(),
-        }),
-    ))
+    Ok(Json(LoginResponse {
+        user,
+        session_token: token.to_string(),
+    }))
 }
 
+/// Log out: deletes the session so the token stops working.
+#[utoipa::path(
+    post,
+    path = "/logout",
+    tag = "auth",
+    responses((status = 204), (status = 401, body = ErrorResponse)),
+    security(("bearer" = []))
+)]
 async fn logout(
     State(state): State<AppState>,
-    jar: CookieJar,
     CurrentUser(user): CurrentUser,
-) -> Result<(CookieJar, StatusCode), ApiError> {
+) -> Result<StatusCode, ApiError> {
     let mut conn = state.pool.get().await?;
     services::auth::logout(&mut conn, user.session_id).await?;
-    Ok((jar.remove(SESSION_COOKIE), StatusCode::NO_CONTENT))
+    Ok(StatusCode::NO_CONTENT)
 }
 
+/// The currently authenticated user.
+#[utoipa::path(
+    get,
+    path = "/me",
+    tag = "auth",
+    responses((status = 200, body = AuthenticatedUser), (status = 401, body = ErrorResponse)),
+    security(("bearer" = []))
+)]
 async fn me(CurrentUser(user): CurrentUser) -> Json<AuthenticatedUser> {
     Json(user)
 }

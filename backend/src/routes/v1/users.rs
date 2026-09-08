@@ -24,36 +24,37 @@
 //! Staff manage clients and admins manage everyone.
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::{get, post},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
+use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::{
-    error::ApiError,
+    error::{ApiError, ErrorResponse},
     models::role::Role,
     routes::extractors::CurrentUser,
     services::users::{self, ListParams, UserRecord},
     state::AppState,
 };
 
-pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/", get(list).post(create))
-        .route("/{id}", get(get_one).patch(update).delete(delete))
-        .route("/{id}/password", post(set_password))
-        .route("/{id}/deactivate", post(deactivate))
-        .route("/{id}/activate", post(activate))
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(list, create))
+        .routes(routes!(get_one, update, delete))
+        .routes(routes!(set_password))
+        .routes(routes!(deactivate))
+        .routes(routes!(activate))
 }
 
-// --- DTOs ---
+// --- DTOs ----
 
 /// What the API returns for a user. Never includes the password hash.
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
@@ -80,11 +81,13 @@ impl From<UserRecord> for UserResponse {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub struct ListQuery {
+    /// Matches username or display name, case-insensitive.
     pub q: Option<String>,
     pub role: Option<Role>,
     pub active: Option<bool>,
+    /// 1-200
     #[serde(default = "default_limit")]
     pub limit: i64,
     #[serde(default)]
@@ -95,27 +98,40 @@ fn default_limit() -> i64 {
     50
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct CreateUserRequest {
+    #[schema(example = "hansen")]
     pub username: String,
+    #[schema(example = "Sygeplejerske Hansen")]
     pub display_name: String,
+    #[schema(example = "hansen-pass-1")]
     pub password: String,
     pub role: Role,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct UpdateUserRequest {
     pub display_name: Option<String>,
     pub role: Option<Role>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct SetPasswordRequest {
+    #[schema(example = "new-pass-12345")]
     pub password: String,
 }
 
 // --- handlers ----
 
+/// List or search accounts. Staff see clients only.
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "users",
+    params(ListQuery),
+    responses((status = 200, body = Vec<UserResponse>), (status = 403, body = ErrorResponse)),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn list(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,
@@ -133,6 +149,20 @@ async fn list(
     Ok(Json(users.into_iter().map(Into::into).collect()))
 }
 
+/// Create an account. The requested role decides which permission is needed.
+#[utoipa::path(
+    post,
+    path = "/",
+    tag = "users",
+    request_body = CreateUserRequest,
+    responses(
+        (status = 201, body = UserResponse),
+        (status = 400, description = "Validation failed", body = ErrorResponse),
+        (status = 403, body = ErrorResponse),
+        (status = 409, description = "Username already exists", body = ErrorResponse),
+    ),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn create(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,
@@ -151,6 +181,19 @@ async fn create(
     Ok((StatusCode::CREATED, Json(created.into())))
 }
 
+/// One account.
+#[utoipa::path(
+    get,
+    path = "/{id}",
+    tag = "users",
+    params(("id" = Uuid, Path)),
+    responses(
+        (status = 200, body = UserResponse),
+        (status = 403, body = ErrorResponse),
+        (status = 404, body = ErrorResponse),
+    ),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn get_one(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,
@@ -160,6 +203,21 @@ async fn get_one(
     Ok(Json(users::get(&mut conn, &actor, id).await?.into()))
 }
 
+/// Change display name and/or role. A role change needs permission for both the old and new role.
+#[utoipa::path(
+    patch,
+    path = "/{id}",
+    tag = "users",
+    params(("id" = Uuid, Path)),
+    request_body = UpdateUserRequest,
+    responses(
+        (status = 200, body = UserResponse),
+        (status = 400, body = ErrorResponse),
+        (status = 403, body = ErrorResponse),
+        (status = 404, body = ErrorResponse),
+    ),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn update(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,
@@ -178,6 +236,16 @@ async fn update(
     Ok(Json(updated.into()))
 }
 
+/// Set a new password. Logs the account out everywhere.
+#[utoipa::path(
+    post,
+    path = "/{id}/password",
+    tag = "users",
+    params(("id" = Uuid, Path)),
+    request_body = SetPasswordRequest,
+    responses((status = 204), (status = 400, body = ErrorResponse), (status = 403, body = ErrorResponse)),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn set_password(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,
@@ -189,6 +257,19 @@ async fn set_password(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Soft delete: the account can no longer log in and its sessions are removed.
+#[utoipa::path(
+    post,
+    path = "/{id}/deactivate",
+    tag = "users",
+    params(("id" = Uuid, Path)),
+    responses(
+        (status = 204),
+        (status = 400, description = "Cannot deactivate your own account", body = ErrorResponse),
+        (status = 403, body = ErrorResponse),
+    ),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn deactivate(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,
@@ -199,6 +280,15 @@ async fn deactivate(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Reactivate a deactivated account.
+#[utoipa::path(
+    post,
+    path = "/{id}/activate",
+    tag = "users",
+    params(("id" = Uuid, Path)),
+    responses((status = 204), (status = 403, body = ErrorResponse)),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn activate(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,
@@ -209,6 +299,19 @@ async fn activate(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Permanently delete an account (admin only). Refused if anything still references it.
+#[utoipa::path(
+    delete,
+    path = "/{id}",
+    tag = "users",
+    params(("id" = Uuid, Path)),
+    responses(
+        (status = 204),
+        (status = 400, description = "Still referenced by other records", body = ErrorResponse),
+        (status = 403, body = ErrorResponse),
+    ),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn delete(
     State(state): State<AppState>,
     CurrentUser(actor): CurrentUser,

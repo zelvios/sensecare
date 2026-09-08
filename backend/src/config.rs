@@ -48,7 +48,10 @@ pub struct Config {
     pub cookie_secure: bool,
     /// If set and the users table is empty, an admin account is created on startup.
     pub bootstrap_admin_password: Option<String>,
+    /// Serve Swagger UI at /swagger-ui. Default on. Set API_DOCS=false to hide it.
+    pub api_docs: bool,
 }
+
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
@@ -85,6 +88,7 @@ impl Config {
             // Production always sets Secure. Development can also for testing behind a local proxy.
             cookie_secure: environment == Environment::Production || env_or("COOKIE_SECURE", false),
             bootstrap_admin_password,
+            api_docs: env_or("API_DOCS", true),
         })
     }
 

@@ -5,6 +5,7 @@ use argon2::{
 use chrono::{Duration, Utc};
 use serde::Serialize;
 use uuid::Uuid;
+use utoipa::ToSchema;
 
 use crate::{
     db::DbConn,
@@ -20,7 +21,7 @@ use crate::{
 };
 
 /// What every authenticated request knows about the caller.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct AuthenticatedUser {
     pub id: Uuid,
     pub username: String,

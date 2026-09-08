@@ -18,31 +18,35 @@
 //!   /api/v1/audit-log?entity_type=device&offset=50     page 2 of device changes
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
-    routing::get,
 };
 use serde::Deserialize;
+use utoipa::IntoParams;
+use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::{
-    error::ApiError,
+    error::{ApiError, ErrorResponse},
     models::{audit::AuditEntry, role::Permission},
     repos,
     routes::extractors::CurrentUser,
     state::AppState,
 };
 
-pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/", get(list))
-        .route("/{entity_type}/{entity_id}", get(for_entity))
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(list))
+        .routes(routes!(for_entity))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub struct AuditQuery {
+    /// user | room | device | threshold | stay | alarm | service_call
     pub entity_type: Option<String>,
+    /// Only actions performed by this user.
     pub actor_id: Option<Uuid>,
+    /// 1-200
     #[serde(default = "default_limit")]
     pub limit: i64,
     #[serde(default)]
@@ -53,6 +57,15 @@ fn default_limit() -> i64 {
     50
 }
 
+/// Newest audit entries first, optionally filtered by entity type and actor.
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "audit",
+    params(AuditQuery),
+    responses((status = 200, body = Vec<AuditEntry>), (status = 403, body = ErrorResponse)),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn list(
     State(state): State<AppState>,
     CurrentUser(user): CurrentUser,
@@ -72,7 +85,15 @@ async fn list(
     Ok(Json(entries))
 }
 
-/// Full history of one record, oldest first, e.g. everything ever done to a user.
+/// Full history of one record, oldest first.
+#[utoipa::path(
+    get,
+    path = "/{entity_type}/{entity_id}",
+    tag = "audit",
+    params(("entity_type" = String, Path), ("entity_id" = String, Path)),
+    responses((status = 200, body = Vec<AuditEntry>), (status = 403, body = ErrorResponse)),
+    security(("session_cookie" = []), ("bearer" = []))
+)]
 async fn for_entity(
     State(state): State<AppState>,
     CurrentUser(user): CurrentUser,

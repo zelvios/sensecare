@@ -2,10 +2,11 @@ use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::Serialize;
 use uuid::Uuid;
+use utoipa::ToSchema;
 
 use crate::db::schema::audit_log;
 
-#[derive(Debug, Clone, Queryable, Selectable, Serialize)]
+#[derive(Debug, Clone, Queryable, Selectable, Serialize, ToSchema)]
 #[diesel(table_name = audit_log)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct AuditEntry {

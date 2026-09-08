@@ -11,7 +11,17 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
-use serde_json::json;
+use serde::Serialize;
+use utoipa::ToSchema;
+
+/// Error body returned by every failing endpoint.
+#[derive(Serialize, ToSchema)]
+pub struct ErrorResponse {
+    /// Stable code that the frontend switches on, e.g. `unauthorized`, `account_deactivated`.
+    #[schema(example = "forbidden")]
+    pub error: String,
+    pub message: String,
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
@@ -90,6 +100,13 @@ impl IntoResponse for ApiError {
             }
         };
 
-        (status, Json(json!({ "error": code, "message": message }))).into_response()
+        (
+            status,
+            Json(ErrorResponse {
+                error: code.to_string(),
+                message,
+            }),
+        )
+            .into_response()
     }
 }
