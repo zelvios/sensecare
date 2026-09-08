@@ -20,6 +20,8 @@ pub enum Permission {
     ManageRooms,
     /// global and per-room climate limits
     ManageThresholds,
+    /// permanently delete a room that was created by mistake (`admin` only)
+    DeleteRooms,
 
     // --- operations ---
     /// acknowledge and close service calls
@@ -96,5 +98,90 @@ impl std::str::FromStr for Role {
             "admin" => Ok(Role::Admin),
             other => Err(format!("unknown role '{other}'")),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn client_only_sees_own_room() {
+        assert!(Role::Client.has(Permission::ViewOwnRoom));
+        assert!(!Role::Client.has(Permission::ViewAllRooms));
+        assert!(!Role::Client.has(Permission::HandleServiceCalls));
+    }
+
+    #[test]
+    fn clients_cannot_manage_any_account() {
+        assert!(!Role::Client.has(Permission::ManageClients));
+        assert!(!Role::Client.has(Permission::ManageStaff));
+        assert!(!Role::Client.has(Permission::DeleteUsers));
+    }
+
+    #[test]
+    fn staff_manages_clients_but_not_staff() {
+        assert!(Role::Staff.has(Permission::ManageClients));
+        assert!(!Role::Staff.has(Permission::ManageStaff));
+    }
+
+    #[test]
+    fn staff_operates_but_does_not_administer() {
+        assert!(Role::Staff.has(Permission::ViewAllRooms));
+        assert!(Role::Staff.has(Permission::HandleServiceCalls));
+        assert!(Role::Staff.has(Permission::HandleAlarms));
+        assert!(Role::Staff.has(Permission::ManageStays));
+        assert!(Role::Staff.has(Permission::ViewDevices));
+        assert!(!Role::Staff.has(Permission::ManageRooms));
+        assert!(!Role::Staff.has(Permission::ManageDevices));
+        assert!(!Role::Staff.has(Permission::ManageThresholds));
+        assert!(!Role::Staff.has(Permission::ViewAuditLog));
+    }
+
+    #[test]
+    fn only_admin_hard_deletes() {
+        assert!(!Role::Client.has(Permission::DeleteUsers));
+        assert!(!Role::Client.has(Permission::DeleteRooms));
+        assert!(!Role::Staff.has(Permission::DeleteUsers));
+        assert!(!Role::Staff.has(Permission::DeleteRooms));
+        assert!(Role::Admin.has(Permission::DeleteUsers));
+        assert!(Role::Admin.has(Permission::DeleteRooms));
+    }
+
+    #[test]
+    fn admin_has_everything() {
+        for p in [
+            Permission::ViewOwnRoom,
+            Permission::ManageStaff,
+            Permission::ManageThresholds,
+            Permission::ViewAuditLog,
+            Permission::DeleteRooms,
+        ] {
+            assert!(Role::Admin.has(p), "admin should have {p:?}");
+        }
+    }
+
+    #[test]
+    fn managing_an_account_maps_to_the_target_role() {
+        assert_eq!(
+            Permission::for_managing(Role::Client),
+            Permission::ManageClients
+        );
+        assert_eq!(
+            Permission::for_managing(Role::Staff),
+            Permission::ManageStaff
+        );
+        assert_eq!(
+            Permission::for_managing(Role::Admin),
+            Permission::ManageStaff
+        );
+    }
+
+    #[test]
+    fn role_names_round_trip() {
+        for r in [Role::Client, Role::Staff, Role::Admin] {
+            assert_eq!(r.as_str().parse::<Role>().unwrap(), r);
+        }
+        assert!("nurse".parse::<Role>().is_err());
     }
 }
