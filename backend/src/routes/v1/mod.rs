@@ -9,14 +9,14 @@ mod audit;
 mod auth;
 mod devices;
 mod rooms;
+mod stays;
 mod users;
 
+use crate::state::AppState;
 use axum::Json;
 use serde::Serialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
-
-use crate::state::AppState;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
@@ -26,6 +26,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .nest("/audit-log", audit::router())
         .nest("/rooms", rooms::router())
         .nest("/devices", devices::router())
+        .nest("/stays", stays::router())
 }
 
 #[derive(Serialize, ToSchema)]

@@ -3,4 +3,5 @@ mod audit;
 pub mod auth;
 pub mod devices;
 pub mod rooms;
+pub mod stays;
 pub mod users;

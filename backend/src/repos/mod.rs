@@ -2,6 +2,7 @@ pub mod audit;
 pub mod devices;
 pub mod rooms;
 pub mod sessions;
+pub mod stays;
 pub mod users;
 
 /// Prepares user input for the SQL `ILIKE` pattern used in `list`.
