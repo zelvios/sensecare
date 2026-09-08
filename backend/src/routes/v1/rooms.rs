@@ -1,12 +1,14 @@
 //! Rules and audit live in services::rooms.
 //!
-//! GET    /api/v1/rooms                    list / search          ViewAllRooms
-//! POST   /api/v1/rooms                    create                 ManageRooms
-//! GET    /api/v1/rooms/{id}                                      ViewAllRooms
-//! PATCH  /api/v1/rooms/{id}               room_number/name/floor ManageRooms
-//! POST   /api/v1/rooms/{id}/deactivate                           ManageRooms
-//! POST   /api/v1/rooms/{id}/activate                             ManageRooms
-//! DELETE /api/v1/rooms/{id}               hard delete            DeleteRooms (admin)
+//! GET    /api/v1/rooms                             list / search                  ViewAllRooms
+//! POST   /api/v1/rooms                             create                         ManageRooms
+//! GET    /api/v1/rooms/{id}                                                       ViewAllRooms
+//! PATCH  /api/v1/rooms/{id}                        room_number/name/floor         ManageRooms
+//! POST   /api/v1/rooms/{id}/deactivate                                            ManageRooms
+//! POST   /api/v1/rooms/{id}/activate                                              ManageRooms
+//! DELETE /api/v1/rooms/{id}                        hard delete                    DeleteRooms (admin)
+//! GET    /api/v1/rooms/{id}/measurements           history, default last 24 h     ViewAllRooms or own room
+//! GET    /api/v1/rooms/{id}/measurements/latest    most recent reading            ViewAllRooms or own room
 //!
 //! Query parameters for the list, all optional:
 //!   q        matches room number or name, case-insensitive
@@ -29,6 +31,8 @@ use crate::{
     error::{ApiError, ErrorResponse},
     models::room::Room,
     routes::extractors::CurrentUser,
+    routes::v1::measurements::{HistoryQuery, MeasurementResponse},
+    services::measurements::{self, HistoryParams},
     services::rooms::{self, ListParams},
     state::AppState,
 };
@@ -39,6 +43,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(get_one, update, delete))
         .routes(routes!(deactivate))
         .routes(routes!(activate))
+        .routes(routes!(measurement_history))
+        .routes(routes!(latest_measurement))
 }
 
 #[derive(Deserialize, IntoParams)]
@@ -233,4 +239,56 @@ async fn delete(
     let mut conn = state.pool.get().await?;
     rooms::delete(&mut conn, &actor, id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Readings for a room, newest first. Defaults to the last 24 hours.
+/// Staff and admins may read any room and a client can only read the room they are checked into.
+#[utoipa::path(
+    get, path = "/{id}/measurements", tag = "measurements", operation_id = "room_measurements",
+    params(("id" = Uuid, Path), HistoryQuery),
+    responses(
+        (status = 200, body = Vec<MeasurementResponse>),
+        (status = 400, body = ErrorResponse),
+        (status = 403, body = ErrorResponse),
+        (status = 404, body = ErrorResponse),
+    ),
+    security(("bearer" = []))
+)]
+async fn measurement_history(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+    Path(id): Path<Uuid>,
+    Query(q): Query<HistoryQuery>,
+) -> Result<Json<Vec<MeasurementResponse>>, ApiError> {
+    let mut conn = state.pool.get().await?;
+    let params = HistoryParams {
+        from: q.from,
+        to: q.to,
+        limit: q.limit,
+        offset: q.offset,
+    };
+    let rows = measurements::history(&mut conn, &actor, id, params).await?;
+    Ok(Json(rows.into_iter().map(Into::into).collect()))
+}
+
+/// The most recent reading for a room.
+#[utoipa::path(
+    get, path = "/{id}/measurements/latest", tag = "measurements", operation_id = "room_latest_measurement",
+    params(("id" = Uuid, Path)),
+    responses(
+        (status = 200, body = MeasurementResponse),
+        (status = 403, body = ErrorResponse),
+        (status = 404, description = "Room not found or no readings yet", body = ErrorResponse),
+    ),
+    security(("bearer" = []))
+)]
+async fn latest_measurement(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<MeasurementResponse>, ApiError> {
+    let mut conn = state.pool.get().await?;
+    Ok(Json(
+        measurements::latest(&mut conn, &actor, id).await?.into(),
+    ))
 }
