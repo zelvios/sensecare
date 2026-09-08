@@ -234,14 +234,14 @@ pub async fn set_active(
     id: Uuid,
     active: bool,
 ) -> Result<(), ApiError> {
+    let target = load_managed(conn, actor, id).await?; // 403 first
     if !active && id == actor.id {
         return Err(ApiError::BadRequest(
             "cannot deactivate your own account".into(),
         ));
     }
-    let target = load_managed(conn, actor, id).await?;
     if target.user.is_active == active {
-        return Ok(()); // already in that state
+        return Ok(());
     }
 
     repos::users::set_active(conn, id, active).await?;
@@ -264,12 +264,12 @@ pub async fn delete(
     id: Uuid,
 ) -> Result<(), ApiError> {
     actor.require(Permission::DeleteUsers)?;
+    let target = load_managed(conn, actor, id).await?;
     if id == actor.id {
         return Err(ApiError::BadRequest(
             "cannot delete your own account".into(),
         ));
     }
-    let target = load_managed(conn, actor, id).await?;
 
     // Sessions cascade, anything else referencing the user makes the delete fail
     // with a foreign-key violation, that error.rs turns into 400 invalid_reference.
