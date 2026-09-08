@@ -33,6 +33,7 @@ services:
       APP_ENV: ${APP_ENV:-development}            # production on the server
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      API_DOCS: ${API_DOCS:-true}                 # Swagger UI at /swagger-ui
     depends_on:
       db:
         condition: service_healthy
