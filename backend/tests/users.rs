@@ -130,6 +130,11 @@ async fn mutations_are_audited() {
         .collect();
     assert_eq!(
         actions,
-        vec!["user.created", "user.updated", "user.deactivated"]
+        vec![
+            "user.created",
+            "user.logged_in",
+            "user.updated",
+            "user.deactivated"
+        ]
     );
 }
