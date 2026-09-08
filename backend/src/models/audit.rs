@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::Serialize;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use crate::db::schema::audit_log;
 

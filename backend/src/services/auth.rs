@@ -4,8 +4,8 @@ use argon2::{
 };
 use chrono::{Duration, Utc};
 use serde::Serialize;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use crate::{
     db::DbConn,
