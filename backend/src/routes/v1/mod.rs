@@ -9,22 +9,32 @@ mod audit;
 mod auth;
 mod users;
 
-use axum::{Json, Router, routing::get};
-use serde_json::{Value, json};
+use axum::Json;
+use serde::Serialize;
+use utoipa::ToSchema;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::state::AppState;
 
-pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/", get(index))
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(index))
         .nest("/auth", auth::router())
-        .nest("/audit-log", audit::router())
         .nest("/users", users::router())
+        .nest("/audit-log", audit::router())
 }
 
-async fn index() -> Json<Value> {
-    Json(json!({
-        "name": "sensecare-api",
-        "version": env!("CARGO_PKG_VERSION"),
-    }))
+#[derive(Serialize, ToSchema)]
+pub struct ApiIndex {
+    name: &'static str,
+    version: &'static str,
+}
+
+/// API index.
+#[utoipa::path(get, path = "/", tag = "health", responses((status = 200, body = ApiIndex)))]
+async fn index() -> Json<ApiIndex> {
+    Json(ApiIndex {
+        name: "sensecare-api",
+        version: env!("CARGO_PKG_VERSION"),
+    })
 }
