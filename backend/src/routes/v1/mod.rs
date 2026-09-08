@@ -7,6 +7,7 @@
 
 mod audit;
 mod auth;
+mod rooms;
 mod users;
 
 use axum::Json;
@@ -22,6 +23,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .nest("/auth", auth::router())
         .nest("/users", users::router())
         .nest("/audit-log", audit::router())
+        .nest("/rooms", rooms::router())
 }
 
 #[derive(Serialize, ToSchema)]
@@ -31,7 +33,8 @@ pub struct ApiIndex {
 }
 
 /// API index.
-#[utoipa::path(get, path = "/", tag = "health", responses((status = 200, body = ApiIndex)))]
+#[utoipa::path(get, path = "/", tag = "health", operation_id = "api_index",
+    responses((status = 200, body = ApiIndex)))]
 async fn index() -> Json<ApiIndex> {
     Json(ApiIndex {
         name: "sensecare-api",
