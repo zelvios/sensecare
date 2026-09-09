@@ -1,6 +1,7 @@
 //! POST /api/v1/auth/login   {username, password} -> user and session token
 //! POST /api/v1/auth/logout  (authenticated)        -> deletes the session
 //! GET  /api/v1/auth/me      (authenticated)        -> the current user
+//! POST /api/v1/auth/password (authenticated)       -> change own password, current one required
 //!
 //! The API is bearer-only: the token from login is sent as `Authorization: Bearer <token>` on
 //! every request. The SvelteKit server keeps it in an HttpOnly cookie for the browser and
@@ -27,6 +28,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(login))
         .routes(routes!(logout))
         .routes(routes!(me))
+        .routes(routes!(change_password))
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -43,6 +45,13 @@ pub struct LoginResponse {
     /// Send as `Authorization: Bearer <session_token>` on every request.
     /// The SvelteKit server stores it in an HttpOnly cookie and never expose it to browser JavaScript.
     pub session_token: String,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct ChangePasswordRequest {
+    pub current_password: String,
+    #[schema(example = "new-pass-12345")]
+    pub new_password: String,
 }
 
 /// Log in. Returns the user and a session token.
@@ -100,4 +109,27 @@ async fn logout(
 )]
 async fn me(CurrentUser(user): CurrentUser) -> Json<AuthenticatedUser> {
     Json(user)
+}
+
+/// Change your own password. Requires the current password. Other sessions are logged out.
+#[utoipa::path(
+    post, path = "/password", tag = "auth", operation_id = "change_own_password",
+    request_body = ChangePasswordRequest,
+    responses((status = 204), (status = 400, description = "Wrong current password or new password too short", body = ErrorResponse), (status = 401, body = ErrorResponse)),
+    security(("bearer" = []))
+)]
+async fn change_password(
+    State(state): State<AppState>,
+    CurrentUser(user): CurrentUser,
+    Json(body): Json<ChangePasswordRequest>,
+) -> Result<StatusCode, ApiError> {
+    let mut conn = state.pool.get().await?;
+    services::auth::change_own_password(
+        &mut conn,
+        &user,
+        &body.current_password,
+        &body.new_password,
+    )
+    .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

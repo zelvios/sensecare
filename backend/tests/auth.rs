@@ -137,3 +137,38 @@ async fn logins_and_failures_are_audited() {
         .unwrap();
     assert!(logged_in["details"]["session_id"].is_string());
 }
+
+#[tokio::test]
+async fn self_service_password_change() {
+    let app = TestApp::spawn().await;
+    let (_, token) = app
+        .create_user("patient1", "patient-pass-1", "client")
+        .await;
+    let other = app.login("patient1", "patient-pass-1").await;
+
+    let wrong = app
+        .post(
+            "/api/v1/auth/password",
+            Some(&token),
+            Some(
+                serde_json::json!({ "current_password": "nope", "new_password": "new-pass-12345" }),
+            ),
+        )
+        .await;
+    assert_eq!(wrong.status(), StatusCode::BAD_REQUEST);
+
+    let ok = app.post("/api/v1/auth/password", Some(&token), Some(serde_json::json!({ "current_password": "patient-pass-1", "new_password": "new-pass-12345" }))).await;
+    assert_eq!(ok.status(), StatusCode::NO_CONTENT);
+
+    assert_eq!(
+        app.get("/api/v1/auth/me", Some(&token)).await.status(),
+        StatusCode::OK,
+        "current session kept"
+    );
+    assert_eq!(
+        app.get("/api/v1/auth/me", Some(&other)).await.status(),
+        StatusCode::UNAUTHORIZED,
+        "other sessions ended"
+    );
+    assert_eq!(app.login("patient1", "new-pass-12345").await.len(), 36);
+}
