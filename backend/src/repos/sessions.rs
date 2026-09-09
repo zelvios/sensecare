@@ -69,3 +69,18 @@ pub async fn delete_all_for_user(conn: &mut DbConn, user_id: Uuid) -> QueryResul
         .execute(conn)
         .await
 }
+
+/// Logs the user out everywhere except the session they are using right now.
+pub async fn delete_all_for_user_except(
+    conn: &mut DbConn,
+    user_id: Uuid,
+    keep: Uuid,
+) -> QueryResult<usize> {
+    diesel::delete(
+        sessions::table
+            .filter(sessions::user_id.eq(user_id))
+            .filter(sessions::id.ne(keep)),
+    )
+    .execute(conn)
+    .await
+}

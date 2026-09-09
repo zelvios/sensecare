@@ -218,5 +218,40 @@ pub async fn bootstrap_admin(conn: &mut DbConn, password: &str) -> Result<bool, 
     Ok(true)
 }
 
+/// Self-service password change. Requires the current password so a stolen
+/// session cannot lock the real owner out. Keeps the current session, ends all others.
+pub async fn change_own_password(
+    conn: &mut DbConn,
+    actor: &AuthenticatedUser,
+    current_password: &str,
+    new_password: &str,
+) -> Result<(), ApiError> {
+    let (user, _) = repos::users::find_by_id(conn, actor.id)
+        .await?
+        .ok_or(ApiError::Unauthorized)?;
+    if !verify_password(current_password.to_owned(), user.password_hash).await? {
+        return Err(ApiError::BadRequest("current password is wrong".into()));
+    }
+    if new_password.len() < 10 {
+        return Err(ApiError::BadRequest(
+            "password must be at least 10 characters".into(),
+        ));
+    }
+
+    let hash = hash_password(new_password.to_owned()).await?;
+    repos::users::set_password_hash(conn, actor.id, &hash).await?;
+    repos::sessions::delete_all_for_user_except(conn, actor.id, actor.session_id).await?;
+
+    audit::record(
+        conn,
+        Some(actor),
+        AuditAction::UserPasswordChanged,
+        &actor.id,
+        Some(json!({ "self_service": true })),
+    )
+    .await?;
+    Ok(())
+}
+
 /// A valid Argon2id hash of a random string, only used to equalise timing.
 const DUMMY_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHRzb21lc2FsdA$x9zZ3Q5u0Y0m6hK4dKq7tXhQZ0yS8v8pQ3g2tWq6kTQ";
