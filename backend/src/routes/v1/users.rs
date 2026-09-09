@@ -104,7 +104,7 @@ pub struct CreateUserRequest {
     pub username: String,
     #[schema(example = "Sygeplejerske Hansen")]
     pub display_name: String,
-    #[schema(example = "hansen-pass-1")]
+    #[schema(example = "nurse-pass-12")]
     pub password: String,
     pub role: Role,
 }

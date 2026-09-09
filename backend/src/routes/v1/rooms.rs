@@ -12,6 +12,7 @@
 //! GET    /api/v1/rooms/{id}/thresholds             effective limits and source    ViewAllRooms or own room
 //! PUT    /api/v1/rooms/{id}/thresholds             create or replace override     ManageThresholds
 //! DELETE /api/v1/rooms/{id}/thresholds             remove override                ManageThresholds
+//! GET    /api/v1/rooms/overview                    dashboard: every room in one call   ViewAllRooms
 //!
 //! Query parameters for the list, all optional:
 //!   q        matches room number or name, case-insensitive
@@ -25,14 +26,15 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use serde::Deserialize;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::{
     error::{ApiError, ErrorResponse},
-    models::room::Room,
+    models::{alarm::AlarmKind, room::Room, service_call::ServiceCallStatus},
     routes::{
         extractors::CurrentUser,
         v1::{
@@ -42,6 +44,7 @@ use crate::{
     },
     services::{
         measurements::{self, HistoryParams},
+        overview::{self, RoomOverview},
         rooms::{self, ListParams},
         thresholds::{self, ThresholdSource},
     },
@@ -57,6 +60,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(measurement_history))
         .routes(routes!(latest_measurement))
         .routes(routes!(get_thresholds, set_thresholds, remove_thresholds))
+        .routes(routes!(overview))
 }
 
 #[derive(Deserialize, IntoParams)]
@@ -94,6 +98,101 @@ pub struct UpdateRoomRequest {
     pub name: Option<String>,
     #[schema(example = "2")]
     pub floor: Option<i16>,
+}
+
+#[derive(Deserialize, IntoParams)]
+pub struct OverviewQuery {
+    /// Also list deactivated rooms.
+    pub include_inactive: Option<bool>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct LatestReadingResponse {
+    pub temperature_c: f64,
+    pub humidity_pct: f64,
+    pub measured_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct OccupantResponse {
+    pub user_id: Uuid,
+    pub display_name: String,
+    pub checked_in_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct DeviceStatusResponse {
+    pub id: Uuid,
+    pub is_active: bool,
+    pub last_seen_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct OpenCallResponse {
+    pub id: Uuid,
+    pub status: ServiceCallStatus,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct OpenAlarmResponse {
+    pub id: Uuid,
+    pub kind: AlarmKind,
+    pub raised_at: DateTime<Utc>,
+    pub acknowledged: bool,
+}
+
+/// One dashboard tile. `latest`, `occupant` and `device` are `null` when absent.
+#[derive(Serialize, ToSchema)]
+pub struct RoomOverviewResponse {
+    pub room: Room,
+    pub latest: Option<LatestReadingResponse>,
+    pub occupant: Option<OccupantResponse>,
+    pub device: Option<DeviceStatusResponse>,
+    pub open_calls: Vec<OpenCallResponse>,
+    pub open_alarms: Vec<OpenAlarmResponse>,
+}
+
+impl From<RoomOverview> for RoomOverviewResponse {
+    fn from(o: RoomOverview) -> Self {
+        Self {
+            room: o.room,
+            latest: o.latest.map(|l| LatestReadingResponse {
+                temperature_c: l.temperature_c,
+                humidity_pct: l.humidity_pct,
+                measured_at: l.measured_at,
+            }),
+            occupant: o.occupant.map(|p| OccupantResponse {
+                user_id: p.user_id,
+                display_name: p.display_name,
+                checked_in_at: p.checked_in_at,
+            }),
+            device: o.device.map(|d| DeviceStatusResponse {
+                id: d.id,
+                is_active: d.is_active,
+                last_seen_at: d.last_seen_at,
+            }),
+            open_calls: o
+                .open_calls
+                .into_iter()
+                .map(|c| OpenCallResponse {
+                    id: c.id,
+                    status: c.status,
+                    created_at: c.created_at,
+                })
+                .collect(),
+            open_alarms: o
+                .open_alarms
+                .into_iter()
+                .map(|a| OpenAlarmResponse {
+                    id: a.id,
+                    kind: a.kind,
+                    raised_at: a.raised_at,
+                    acknowledged: a.acknowledged,
+                })
+                .collect(),
+        }
+    }
 }
 
 /// List or search rooms.
@@ -359,4 +458,22 @@ async fn remove_thresholds(
     let mut conn = state.pool.get().await?;
     thresholds::remove_for_room(&mut conn, &actor, id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Every room with its latest reading, occupant, device status, open calls and open alarms.
+/// The staff dashboard in one call.
+#[utoipa::path(
+    get, path = "/overview", tag = "rooms", operation_id = "rooms_overview",
+    params(OverviewQuery),
+    responses((status = 200, body = Vec<RoomOverviewResponse>), (status = 403, body = ErrorResponse)),
+    security(("bearer" = []))
+)]
+async fn overview(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+    Query(q): Query<OverviewQuery>,
+) -> Result<Json<Vec<RoomOverviewResponse>>, ApiError> {
+    let mut conn = state.pool.get().await?;
+    let rows = overview::rooms(&mut conn, &actor, q.include_inactive.unwrap_or(false)).await?;
+    Ok(Json(rows.into_iter().map(Into::into).collect()))
 }

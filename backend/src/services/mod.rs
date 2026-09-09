@@ -4,6 +4,7 @@ mod audit;
 pub mod auth;
 pub mod devices;
 pub mod measurements;
+pub mod overview;
 pub mod rooms;
 pub mod service_calls;
 pub mod stays;
