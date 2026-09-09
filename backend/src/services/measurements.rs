@@ -4,6 +4,7 @@
 //!   - `measured_at` is optional (server time if missing) and may not be in the future
 //!   - staff and admins read any room; a client reads only the room they are checked into
 //!   - no audit entries: the measurements table is the record.
+//!   - every stored reading is evaluated against the room's thresholds (see services::alarms)
 
 use bigdecimal::{BigDecimal, FromPrimitive};
 use chrono::{DateTime, Duration, Utc};
@@ -18,7 +19,7 @@ use crate::{
         role::Permission,
     },
     repos::{self, measurements::MeasurementRange},
-    services::auth::AuthenticatedUser,
+    services::{alarms, auth::AuthenticatedUser},
 };
 
 /// Readings older than this cannot be requested in one page.
@@ -63,6 +64,8 @@ pub async fn ingest(
         },
     )
     .await?;
+
+    alarms::evaluate(conn, &measurement).await?;
 
     Ok(measurement)
 }

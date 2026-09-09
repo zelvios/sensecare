@@ -1,3 +1,4 @@
+pub mod alarm;
 pub mod audit;
 pub mod device;
 pub mod measurement;
@@ -6,4 +7,5 @@ pub mod room;
 pub mod service_call;
 pub mod session;
 pub mod stay;
+pub mod threshold;
 pub mod user;
