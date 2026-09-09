@@ -61,6 +61,8 @@ pub enum AuditAction {
     AlarmResolved,
     ServiceCallAcknowledged,
     ServiceCallClosed,
+    ServiceCallCreated,
+    ServiceCallUpdated,
 }
 
 impl AuditAction {
@@ -96,6 +98,8 @@ impl AuditAction {
             AlarmResolved => "alarm.resolved",
             ServiceCallAcknowledged => "service_call.acknowledged",
             ServiceCallClosed => "service_call.closed",
+            ServiceCallCreated => "service_call.created",
+            ServiceCallUpdated => "service_call.updated",
         }
     }
 
