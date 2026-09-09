@@ -141,16 +141,29 @@ pub async fn update(
     conn: &mut DbConn,
     actor: &AuthenticatedUser,
     id: Uuid,
+    username: Option<&str>,
     display_name: Option<&str>,
     new_role: Option<Role>,
 ) -> Result<UserRecord, ApiError> {
     let target = load_managed(conn, actor, id).await?;
+
+    let username = username.map(|u| u.trim().to_lowercase());
+    if let Some(u) = &username {
+        validate_username(u)?;
+    }
     let display_name = display_name.map(str::trim);
     if let Some(name) = display_name {
         validate_display_name(name)?;
     }
 
     let mut changes = serde_json::Map::new();
+
+    if let Some(u) = username.as_deref().filter(|u| *u != target.user.username) {
+        changes.insert(
+            "username".into(),
+            json!({ "from": target.user.username, "to": u }),
+        );
+    }
 
     if let Some(name) = display_name.filter(|n| *n != target.user.display_name) {
         changes.insert(
@@ -179,11 +192,20 @@ pub async fn update(
         return Ok(target); // nothing to do, no audit entry for a no-op
     }
 
+    // Only send fields that actually changed, so an unchanged username does not
+    // trigger a needless write.
     let user = repos::users::update(
         conn,
         id,
         &UserUpdate {
-            display_name,
+            username: changes
+                .contains_key("username")
+                .then_some(username.as_deref())
+                .flatten(),
+            display_name: changes
+                .contains_key("display_name")
+                .then_some(display_name)
+                .flatten(),
             role_id,
         },
     )
