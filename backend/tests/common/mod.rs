@@ -117,6 +117,15 @@ impl TestApp {
         self.send(Request::patch(path), token, Some(body)).await
     }
 
+    pub async fn put<B: Serialize>(
+        &self,
+        path: &str,
+        token: Option<&str>,
+        body: B,
+    ) -> Response<Body> {
+        self.send(Request::put(path), token, Some(body)).await
+    }
+
     pub async fn delete(&self, path: &str, token: Option<&str>) -> Response<Body> {
         self.send(Request::delete(path), token, None::<()>).await
     }
