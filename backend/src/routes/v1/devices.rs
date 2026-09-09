@@ -11,6 +11,7 @@
 //! POST   /api/v1/devices/{id}/activate                               ManageDevices
 //! DELETE /api/v1/devices/{id}               hard delete              DeleteDevices (admin)
 //! POST   /api/v1/devices/measurements       report a reading         X-Device-Id + X-Device-Key
+//! POST   /api/v1/devices/service-calls      button press             X-Device-Id + X-Device-Key
 
 use axum::{
     Json,
@@ -26,10 +27,18 @@ use uuid::Uuid;
 use crate::{
     error::{ApiError, ErrorResponse},
     models::device::Device,
-    routes::extractors::{CurrentUser, DeviceAuth},
-    routes::v1::measurements::{MeasurementRequest, MeasurementResponse},
-    services::devices::{self, DeviceWithKey, ListParams},
-    services::measurements::{self, Reading},
+    routes::{
+        extractors::{CurrentUser, DeviceAuth},
+        v1::{
+            measurements::{MeasurementRequest, MeasurementResponse},
+            service_calls::ServiceCallResponse,
+        },
+    },
+    services::{
+        devices::{self, DeviceWithKey, ListParams},
+        measurements::{self, Reading},
+        service_calls,
+    },
     state::AppState,
 };
 
@@ -43,6 +52,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(rotate_key))
         .routes(routes!(deactivate))
         .routes(routes!(activate))
+        .routes(routes!(raise_service_call))
 }
 
 // --- DTOs ----
@@ -367,4 +377,32 @@ async fn report_measurement(
     };
     let stored = measurements::ingest(&mut conn, &device, reading).await?;
     Ok((StatusCode::CREATED, Json(stored.into())))
+}
+
+/// Button press. Creates an open call, or returns the room's existing unclosed call.
+#[utoipa::path(
+    post, path = "/service-calls", tag = "service_calls", operation_id = "raise_service_call",
+    responses(
+        (status = 201, description = "New call created", body = ServiceCallResponse),
+        (status = 200, description = "Room already had an open call; returned as is", body = ServiceCallResponse),
+        (status = 401, body = ErrorResponse),
+        (status = 409, description = "Device is not assigned to a room", body = ErrorResponse),
+    ),
+    security(("device_id" = [], "device_key" = []))
+)]
+async fn raise_service_call(
+    State(state): State<AppState>,
+    DeviceAuth(device): DeviceAuth,
+) -> Result<(StatusCode, Json<ServiceCallResponse>), ApiError> {
+    let mut conn = state.pool.get().await?;
+    let raised = service_calls::raise(&mut conn, &device).await?;
+    let status = if raised.created {
+        StatusCode::CREATED
+    } else {
+        StatusCode::OK
+    };
+    Ok((
+        status,
+        Json(ServiceCallResponse::from_call(raised.call, String::new())),
+    ))
 }

@@ -4,5 +4,6 @@ pub mod auth;
 pub mod devices;
 pub mod measurements;
 pub mod rooms;
+pub mod service_calls;
 pub mod stays;
 pub mod users;

@@ -3,6 +3,7 @@ pub mod device;
 pub mod measurement;
 pub mod role;
 pub mod room;
+pub mod service_call;
 pub mod session;
 pub mod stay;
 pub mod user;

@@ -25,6 +25,7 @@ use utoipa::{
         (name = "devices", description = "Room nodes: registration, keys and device authentication"),
         (name = "stays", description = "Which client occupies which room: check-in and check-out"),
         (name = "measurements", description = "Temperature and humidity: reported by devices, read per room"),
+        (name = "service_calls", description = "The room button: raised by devices, handled by staff"),
         (name = "audit", description = "Audit log (admin)"),
     ),
     modifiers(&SecurityAddon)
