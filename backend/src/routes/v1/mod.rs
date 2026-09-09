@@ -12,6 +12,7 @@ mod auth;
 mod devices;
 mod measurements;
 mod rooms;
+mod service_calls;
 mod stays;
 mod users;
 
@@ -30,6 +31,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .nest("/rooms", rooms::router())
         .nest("/devices", devices::router())
         .nest("/stays", stays::router())
+        .nest("/service-calls", service_calls::router())
 }
 
 #[derive(Serialize, ToSchema)]

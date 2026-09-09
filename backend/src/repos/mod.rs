@@ -2,6 +2,7 @@ pub mod audit;
 pub mod devices;
 pub mod measurements;
 pub mod rooms;
+pub mod service_calls;
 pub mod sessions;
 pub mod stays;
 pub mod users;
