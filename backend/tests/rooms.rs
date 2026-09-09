@@ -11,7 +11,7 @@ fn room(number: &str) -> serde_json::Value {
 async fn admin_creates_and_staff_reads() {
     let app = TestApp::spawn().await;
     let admin = app.admin_token().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
 
     let res = app
         .post("/api/v1/rooms", Some(&admin), Some(room("12")))
@@ -35,7 +35,7 @@ async fn admin_creates_and_staff_reads() {
 #[tokio::test]
 async fn staff_cannot_manage_rooms() {
     let app = TestApp::spawn().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     let res = app
         .post("/api/v1/rooms", Some(&staff), Some(room("12")))
         .await;
@@ -161,7 +161,7 @@ async fn update_and_deactivate_are_audited() {
 async fn only_admin_can_hard_delete_rooms() {
     let app = TestApp::spawn().await;
     let admin = app.admin_token().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     let id = json(
         app.post("/api/v1/rooms", Some(&admin), Some(room("12")))
             .await,

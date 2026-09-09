@@ -55,7 +55,7 @@ async fn k1_k8_measurement_stored_for_correct_room() {
 #[tokio::test]
 async fn k2_k9_button_press_becomes_a_call_staff_can_handle() {
     let app = TestApp::spawn().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     let room = app.create_room("12").await;
     let (dev, key) = app.create_device(Some(room)).await;
 
@@ -95,7 +95,7 @@ async fn k3_login_reports_the_users_role() {
     let (_, client) = app
         .create_user("patient1", "patient-pass-1", "client")
         .await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
 
     assert_eq!(
         json(app.get("/api/v1/auth/me", Some(&client)).await).await["role"],
@@ -148,7 +148,7 @@ async fn k4_client_sees_own_room_and_stay() {
 #[tokio::test]
 async fn k5_staff_overview_lists_all_rooms_with_details() {
     let app = TestApp::spawn().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     let r1 = app.create_room("12").await;
     app.create_room("13").await;
     let (dev, key) = app.create_device(Some(r1)).await;

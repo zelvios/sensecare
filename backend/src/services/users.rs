@@ -106,18 +106,18 @@ pub async fn create(
     role: Role,
 ) -> Result<UserRecord, ApiError> {
     actor.require(Permission::for_managing(role))?;
-    let username = username.trim();
+    let username = username.trim().to_lowercase();
     let display_name = display_name.trim();
-    validate_username(username)?;
+    validate_username(&username)?;
     validate_display_name(display_name)?;
-    validate_password(password)?;
+    validate_password(password, &username)?;
 
     let hash = auth::hash_password(password.to_owned()).await?;
     let role_id = repos::users::role_id_by_name(conn, role.as_str()).await?;
     let user = repos::users::insert(
         conn,
         &NewUser {
-            username,
+            username: &username,
             display_name,
             password_hash: &hash,
             role_id,
@@ -231,8 +231,8 @@ pub async fn set_password(
     id: Uuid,
     password: &str,
 ) -> Result<(), ApiError> {
-    load_managed(conn, actor, id).await?;
-    validate_password(password)?;
+    let target = load_managed(conn, actor, id).await?;
+    validate_password(password, &target.user.username)?;
 
     let hash = auth::hash_password(password.to_owned()).await?;
     repos::users::set_password_hash(conn, id, &hash).await?;
@@ -327,7 +327,7 @@ fn validate_username(u: &str) -> Result<(), ApiError> {
 }
 
 fn validate_display_name(n: &str) -> Result<(), ApiError> {
-    if (1..=128).contains(&n.len()) {
+    if (1..=128).contains(&n.chars().count()) {
         Ok(())
     } else {
         Err(ApiError::BadRequest(
@@ -336,14 +336,27 @@ fn validate_display_name(n: &str) -> Result<(), ApiError> {
     }
 }
 
-fn validate_password(p: &str) -> Result<(), ApiError> {
-    if p.len() >= 10 {
-        Ok(())
-    } else {
-        Err(ApiError::BadRequest(
+/// Password rules, shared by account management and self-service.
+/// Length over composition rules.
+pub(crate) fn validate_password(p: &str, username: &str) -> Result<(), ApiError> {
+    let len = p.chars().count();
+    if len < 10 {
+        return Err(ApiError::BadRequest(
             "password must be at least 10 characters".into(),
-        ))
+        ));
     }
+    // Bounds the Argon2 work per login attempt.
+    if len > 128 {
+        return Err(ApiError::BadRequest(
+            "password must be at most 128 characters".into(),
+        ));
+    }
+    if p.to_lowercase().contains(&username.to_lowercase()) {
+        return Err(ApiError::BadRequest(
+            "password must not contain the username".into(),
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -367,10 +380,21 @@ mod tests {
         assert!(validate_display_name("").is_err());
         assert!(validate_display_name(&"x".repeat(129)).is_err());
     }
-
     #[test]
     fn password_rules() {
-        assert!(validate_password("abcdefghij").is_ok());
-        assert!(validate_password("short").is_err());
+        assert!(validate_password("abcdefghij", "jacob").is_ok());
+        assert!(validate_password("short", "jacob").is_err(), "too short");
+        assert!(
+            validate_password(&"x".repeat(129), "jacob").is_err(),
+            "too long"
+        );
+        assert!(
+            validate_password("jacob-secret-1", "jacob").is_err(),
+            "contains username"
+        );
+        assert!(
+            validate_password("Jacob-Secret-1", "jacob").is_err(),
+            "case insensitive"
+        );
     }
 }

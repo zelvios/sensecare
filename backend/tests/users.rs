@@ -6,7 +6,7 @@ use common::{TestApp, json};
 #[tokio::test]
 async fn staff_can_manage_clients_but_not_staff() {
     let app = TestApp::spawn().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
 
     let ok = app
         .post("/api/v1/users", Some(&staff), Some(serde_json::json!({
@@ -17,7 +17,7 @@ async fn staff_can_manage_clients_but_not_staff() {
 
     let forbidden = app
         .post("/api/v1/users", Some(&staff), Some(serde_json::json!({
-            "username": "nielsen", "display_name": "Nielsen", "password": "nielsen-pass-1", "role": "staff"
+            "username": "nielsen", "display_name": "Nielsen", "password": "doctor-pass-12", "role": "staff"
         })))
         .await;
     assert_eq!(forbidden.status(), StatusCode::FORBIDDEN);
@@ -26,7 +26,7 @@ async fn staff_can_manage_clients_but_not_staff() {
 #[tokio::test]
 async fn staff_list_only_shows_clients() {
     let app = TestApp::spawn().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     app.create_user("patient1", "patient-pass-1", "client")
         .await;
 

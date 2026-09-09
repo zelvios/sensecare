@@ -10,7 +10,7 @@ fn limits(tmin: f64, tmax: f64) -> serde_json::Value {
 #[tokio::test]
 async fn global_default_is_seeded_and_staff_can_read_it() {
     let app = TestApp::spawn().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     let res = app.get("/api/v1/thresholds", Some(&staff)).await;
     assert_eq!(res.status(), StatusCode::OK);
     let t = json(res).await;
@@ -22,7 +22,7 @@ async fn global_default_is_seeded_and_staff_can_read_it() {
 async fn only_admin_changes_thresholds() {
     let app = TestApp::spawn().await;
     let admin = app.admin_token().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
 
     assert_eq!(
         app.put("/api/v1/thresholds", Some(&staff), limits(18.0, 25.0))
