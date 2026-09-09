@@ -105,6 +105,7 @@ diesel::table! {
         #[max_length = 16]
         status -> Varchar,
         created_at -> Timestamptz,
+        pressed_at -> Nullable<Timestamptz>,
         acknowledged_at -> Nullable<Timestamptz>,
         acknowledged_by -> Nullable<Uuid>,
         closed_at -> Nullable<Timestamptz>,

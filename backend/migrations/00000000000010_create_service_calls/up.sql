@@ -5,6 +5,7 @@ CREATE TABLE service_calls
     device_id       uuid        NOT NULL REFERENCES devices (id) ON DELETE RESTRICT,
     status          varchar(16) NOT NULL DEFAULT 'open',
     created_at      timestamptz NOT NULL DEFAULT now(),
+    pressed_at      timestamptz, -- device clock, if it has one
     acknowledged_at timestamptz,
     acknowledged_by uuid        REFERENCES users (id) ON DELETE SET NULL,
     closed_at       timestamptz,
