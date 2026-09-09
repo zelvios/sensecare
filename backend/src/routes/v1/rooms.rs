@@ -9,6 +9,9 @@
 //! DELETE /api/v1/rooms/{id}                        hard delete                    DeleteRooms (admin)
 //! GET    /api/v1/rooms/{id}/measurements           history, default last 24 h     ViewAllRooms or own room
 //! GET    /api/v1/rooms/{id}/measurements/latest    most recent reading            ViewAllRooms or own room
+//! GET    /api/v1/rooms/{id}/thresholds             effective limits and source    ViewAllRooms or own room
+//! PUT    /api/v1/rooms/{id}/thresholds             create or replace override     ManageThresholds
+//! DELETE /api/v1/rooms/{id}/thresholds             remove override                ManageThresholds
 //!
 //! Query parameters for the list, all optional:
 //!   q        matches room number or name, case-insensitive
@@ -30,10 +33,18 @@ use uuid::Uuid;
 use crate::{
     error::{ApiError, ErrorResponse},
     models::room::Room,
-    routes::extractors::CurrentUser,
-    routes::v1::measurements::{HistoryQuery, MeasurementResponse},
-    services::measurements::{self, HistoryParams},
-    services::rooms::{self, ListParams},
+    routes::{
+        extractors::CurrentUser,
+        v1::{
+            measurements::{HistoryQuery, MeasurementResponse},
+            thresholds::{ThresholdRequest, ThresholdResponse},
+        },
+    },
+    services::{
+        measurements::{self, HistoryParams},
+        rooms::{self, ListParams},
+        thresholds::{self, ThresholdSource},
+    },
     state::AppState,
 };
 
@@ -45,6 +56,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(activate))
         .routes(routes!(measurement_history))
         .routes(routes!(latest_measurement))
+        .routes(routes!(get_thresholds, set_thresholds, remove_thresholds))
 }
 
 #[derive(Deserialize, IntoParams)]
@@ -291,4 +303,60 @@ async fn latest_measurement(
     Ok(Json(
         measurements::latest(&mut conn, &actor, id).await?.into(),
     ))
+}
+
+/// The limits in force for this room: its override, or the global default.
+#[utoipa::path(
+    get, path = "/{id}/thresholds", tag = "thresholds", operation_id = "room_thresholds",
+    params(("id" = Uuid, Path)),
+    responses((status = 200, body = ThresholdResponse), (status = 403, body = ErrorResponse), (status = 404, body = ErrorResponse)),
+    security(("bearer" = []))
+)]
+async fn get_thresholds(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ThresholdResponse>, ApiError> {
+    let mut conn = state.pool.get().await?;
+    let (t, source) = thresholds::read_for_room(&mut conn, &actor, id).await?;
+    Ok(Json(ThresholdResponse::from_threshold(t, source)))
+}
+
+/// Create or replace this room's override (admin).
+#[utoipa::path(
+    put, path = "/{id}/thresholds", tag = "thresholds", operation_id = "set_room_thresholds",
+    params(("id" = Uuid, Path)),
+    request_body = ThresholdRequest,
+    responses((status = 200, body = ThresholdResponse), (status = 400, body = ErrorResponse), (status = 403, body = ErrorResponse), (status = 404, body = ErrorResponse)),
+    security(("bearer" = []))
+)]
+async fn set_thresholds(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+    Path(id): Path<Uuid>,
+    Json(body): Json<ThresholdRequest>,
+) -> Result<Json<ThresholdResponse>, ApiError> {
+    let mut conn = state.pool.get().await?;
+    let t = thresholds::set_for_room(&mut conn, &actor, id, body.into()).await?;
+    Ok(Json(ThresholdResponse::from_threshold(
+        t,
+        ThresholdSource::Room,
+    )))
+}
+
+/// Remove this rooms override, so the global default applies again (admin).
+#[utoipa::path(
+    delete, path = "/{id}/thresholds", tag = "thresholds", operation_id = "remove_room_thresholds",
+    params(("id" = Uuid, Path)),
+    responses((status = 204), (status = 403, body = ErrorResponse), (status = 404, description = "Room has no override", body = ErrorResponse)),
+    security(("bearer" = []))
+)]
+async fn remove_thresholds(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, ApiError> {
+    let mut conn = state.pool.get().await?;
+    thresholds::remove_for_room(&mut conn, &actor, id).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
