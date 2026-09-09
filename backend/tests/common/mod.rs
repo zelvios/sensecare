@@ -22,6 +22,7 @@ pub struct TestApp {
     pub router: Router,
     pub db_name: String,
     admin_url: String,
+    database_url: String,
 }
 
 impl TestApp {
@@ -49,7 +50,7 @@ impl TestApp {
 
         let config = Config {
             environment: Environment::Development,
-            database_url,
+            database_url: database_url.clone(),
             bind_addr: "127.0.0.1:0".into(),
             db_pool_size: 2,
             web_origin: None,
@@ -63,6 +64,7 @@ impl TestApp {
             router,
             db_name,
             admin_url,
+            database_url,
         }
     }
 
@@ -227,6 +229,37 @@ impl TestApp {
             .body(Body::empty())
             .unwrap();
         self.router.clone().oneshot(request).await.unwrap()
+    }
+
+    /// Button press with the device's own timestamp.
+    pub async fn press_button_at(&self, id: &str, key: &str, pressed_at: &str) -> Response<Body> {
+        self.post_as_device(
+            "/api/v1/devices/service-calls",
+            id,
+            key,
+            serde_json::json!({ "pressed_at": pressed_at }),
+        )
+        .await
+    }
+
+    /// Reads a stored password hash straight from the database. Only for K12,
+    /// which asserts something the API deliberately never exposes.
+    pub async fn password_hash_of(&self, username: &str) -> String {
+        use diesel::{QueryableByName, sql_types::Text};
+        #[derive(QueryableByName)]
+        struct Row {
+            #[diesel(sql_type = Text)]
+            password_hash: String,
+        }
+        let mut conn = AsyncPgConnection::establish(&self.database_url)
+            .await
+            .unwrap();
+        let row: Row = diesel::sql_query("SELECT password_hash FROM users WHERE username = $1")
+            .bind::<Text, _>(username)
+            .get_result(&mut conn)
+            .await
+            .unwrap();
+        row.password_hash
     }
 }
 
