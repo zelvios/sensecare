@@ -196,7 +196,7 @@ async fn assign_and_unassign_are_audited() {
 async fn staff_can_view_but_not_manage() {
     let app = TestApp::spawn().await;
     let admin = app.admin_token().await;
-    let (_, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (_, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     let id = register(&app, &admin, None).await["id"]
         .as_str()
         .unwrap()

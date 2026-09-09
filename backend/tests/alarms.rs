@@ -91,7 +91,7 @@ async fn two_kinds_can_be_open_at_once() {
 async fn staff_acknowledges_and_resolves_with_audit() {
     let app = TestApp::spawn().await;
     let admin = app.admin_token().await;
-    let (staff_id, staff) = app.create_user("hansen", "hansen-pass-1", "staff").await;
+    let (staff_id, staff) = app.create_user("hansen", "nurse-pass-12", "staff").await;
     let room = app.create_room("12").await;
     let (dev, key) = app.create_device(Some(room)).await;
     app.post_as_device(

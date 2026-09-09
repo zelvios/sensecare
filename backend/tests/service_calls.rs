@@ -36,7 +36,7 @@ async fn unassigned_device_cannot_call() {
 #[tokio::test]
 async fn staff_acknowledges_then_closes_with_note() {
     let app = TestApp::spawn().await;
-    let (staff_id, staff) = app.create_user("jacob", "jacob-pass-1", "staff").await;
+    let (staff_id, staff) = app.create_user("jacob", "staff-pass-142", "staff").await;
     let room = app.create_room("12").await;
     let (dev, key) = app.create_device(Some(room)).await;
     let id = json(app.press_button(&dev, &key).await).await["id"]

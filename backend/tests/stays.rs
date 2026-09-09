@@ -11,7 +11,7 @@ fn check_in(room: Uuid, user: Uuid) -> serde_json::Value {
 #[tokio::test]
 async fn staff_checks_client_in_and_out() {
     let app = TestApp::spawn().await;
-    let (_, staff) = app.create_user("jacob", "jacob-pass-1", "staff").await;
+    let (_, staff) = app.create_user("jacob", "staff-pass-142", "staff").await;
     let (patient, patient_token) = app
         .create_user("patient1", "patient-pass-1", "client")
         .await;
@@ -89,7 +89,7 @@ async fn one_open_stay_per_room_and_per_user() {
 async fn only_active_clients_in_active_rooms() {
     let app = TestApp::spawn().await;
     let admin = app.admin_token().await;
-    let (staff_id, _) = app.create_user("jacob", "jacob-pass-1", "staff").await;
+    let (staff_id, _) = app.create_user("jacob", "staff-pass-142", "staff").await;
     let (patient, _) = app
         .create_user("patient1", "patient-pass-1", "client")
         .await;
