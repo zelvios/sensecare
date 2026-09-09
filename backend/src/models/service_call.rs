@@ -46,6 +46,8 @@ pub struct ServiceCall {
     pub device_id: Uuid,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    /// Device clock at the press, when the device sent one.
+    pub pressed_at: Option<DateTime<Utc>>,
     pub acknowledged_at: Option<DateTime<Utc>>,
     pub acknowledged_by: Option<Uuid>,
     pub closed_at: Option<DateTime<Utc>>,
@@ -67,4 +69,5 @@ impl ServiceCall {
 pub struct NewServiceCall {
     pub room_id: Uuid,
     pub device_id: Uuid,
+    pub pressed_at: Option<DateTime<Utc>>,
 }
