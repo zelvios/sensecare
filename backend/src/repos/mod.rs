@@ -1,3 +1,4 @@
+pub mod alarms;
 pub mod audit;
 pub mod devices;
 pub mod measurements;
@@ -5,6 +6,7 @@ pub mod rooms;
 pub mod service_calls;
 pub mod sessions;
 pub mod stays;
+pub mod thresholds;
 pub mod users;
 
 /// Prepares user input for the SQL `ILIKE` pattern used in `list`.
