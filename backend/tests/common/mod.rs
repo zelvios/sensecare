@@ -210,6 +210,15 @@ impl TestApp {
             v["key"].as_str().unwrap().to_owned(),
         )
     }
+
+    pub async fn press_button(&self, id: &str, key: &str) -> Response<Body> {
+        let request = Request::post("/api/v1/devices/service-calls")
+            .header("x-device-id", id)
+            .header("x-device-key", key)
+            .body(Body::empty())
+            .unwrap();
+        self.router.clone().oneshot(request).await.unwrap()
+    }
 }
 
 impl Drop for TestApp {
