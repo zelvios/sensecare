@@ -7,6 +7,7 @@
 //!   - reading needs `ViewAllRooms`, handling needs `HandleServiceCalls` (staff and admin)
 //!   - audit: created (actor none), acknowledged, closed, note updated.
 
+use chrono::{DateTime, Duration, Utc};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -34,10 +35,20 @@ pub struct Raised {
 }
 
 /// A button press from an authenticated device.
-pub async fn raise(conn: &mut DbConn, device: &Device) -> Result<Raised, ApiError> {
+pub async fn raise(
+    conn: &mut DbConn,
+    device: &Device,
+    pressed_at: Option<DateTime<Utc>>,
+) -> Result<Raised, ApiError> {
     let room_id = device
         .room_id
         .ok_or_else(|| ApiError::Conflict("device is not assigned to a room".into()))?;
+
+    if let Some(t) = pressed_at
+        && t > Utc::now() + Duration::minutes(5)
+    {
+        return Err(ApiError::BadRequest("pressed_at is in the future".into()));
+    }
 
     if let Some(existing) = repos::service_calls::open_for_room(conn, room_id).await? {
         return Ok(Raised {
@@ -51,6 +62,7 @@ pub async fn raise(conn: &mut DbConn, device: &Device) -> Result<Raised, ApiErro
         &NewServiceCall {
             room_id,
             device_id: device.id,
+            pressed_at,
         },
     )
     .await?;

@@ -142,6 +142,12 @@ pub struct AssignDeviceRequest {
     pub room_id: Option<Uuid>,
 }
 
+#[derive(Deserialize, ToSchema)]
+pub struct PressRequest {
+    /// Device clock at the press, RFC 3339. Omit if the device has no clock.
+    pub pressed_at: Option<DateTime<Utc>>,
+}
+
 // --- handlers ----
 
 /// List or search devices.
@@ -384,7 +390,8 @@ async fn report_measurement(
     post, path = "/service-calls", tag = "service_calls", operation_id = "raise_service_call",
     responses(
         (status = 201, description = "New call created", body = ServiceCallResponse),
-        (status = 200, description = "Room already had an open call; returned as is", body = ServiceCallResponse),
+        (status = 200, description = "Room already had an open call, returned as is", body = ServiceCallResponse),
+        (status = 400, description = "pressed_at is in the future", body = ErrorResponse),
         (status = 401, body = ErrorResponse),
         (status = 409, description = "Device is not assigned to a room", body = ErrorResponse),
     ),
@@ -393,9 +400,11 @@ async fn report_measurement(
 async fn raise_service_call(
     State(state): State<AppState>,
     DeviceAuth(device): DeviceAuth,
+    body: Option<Json<PressRequest>>,
 ) -> Result<(StatusCode, Json<ServiceCallResponse>), ApiError> {
+    let pressed_at = body.and_then(|Json(b)| b.pressed_at);
     let mut conn = state.pool.get().await?;
-    let raised = service_calls::raise(&mut conn, &device).await?;
+    let raised = service_calls::raise(&mut conn, &device, pressed_at).await?;
     let status = if raised.created {
         StatusCode::CREATED
     } else {
