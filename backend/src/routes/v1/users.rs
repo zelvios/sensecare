@@ -3,7 +3,7 @@
 //! GET    /api/v1/users                    list / search
 //! POST   /api/v1/users                    create
 //! GET    /api/v1/users/{id}
-//! PATCH  /api/v1/users/{id}               display_name and/or role
+//! PATCH  /api/v1/users/{id}               username, display_name and/or role
 //! POST   /api/v1/users/{id}/password      set a new password
 //! POST   /api/v1/users/{id}/deactivate    soft delete
 //! POST   /api/v1/users/{id}/activate
@@ -111,6 +111,8 @@ pub struct CreateUserRequest {
 
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateUserRequest {
+    #[schema(example = "j.hansen")]
+    pub username: Option<String>,
     pub display_name: Option<String>,
     pub role: Option<Role>,
 }
@@ -207,6 +209,7 @@ async fn get_one(
         (status = 400, body = ErrorResponse),
         (status = 403, body = ErrorResponse),
         (status = 404, body = ErrorResponse),
+        (status = 409, description = "Username already exists", body = ErrorResponse)
     ),
     security(("session_cookie" = []), ("bearer" = []))
 )]
@@ -221,6 +224,7 @@ async fn update(
         &mut conn,
         &actor,
         id,
+        body.username.as_deref(),
         body.display_name.as_deref(),
         body.role,
     )
