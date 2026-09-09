@@ -9,6 +9,7 @@ CREATE TABLE climate_thresholds
     created_at      timestamptz   NOT NULL DEFAULT now(),
     updated_at      timestamptz   NOT NULL DEFAULT now(),
     CONSTRAINT climate_thresholds_temperature_order CHECK (temperature_min < temperature_max),
+    CONSTRAINT climate_thresholds_temperature_range CHECK (temperature_min >= -40 AND temperature_max <= 85),
     CONSTRAINT climate_thresholds_humidity_order CHECK (humidity_min < humidity_max),
     CONSTRAINT climate_thresholds_humidity_range CHECK (humidity_min >= 0 AND humidity_max <= 100)
 );
