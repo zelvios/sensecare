@@ -19,5 +19,20 @@
   "title_my_room": "Mit værelse - SenseCare",
   "title_overview": "Oversigt - SenseCare",
   "menu_open": "Åbn menu",
-  "menu_close": "Luk menu"
+  "menu_close": "Luk menu",
+  "room_heading": "Værelse {number}",
+  "checked_in_at": "Indtjekket {time}",
+  "last_reading": "Seneste måling {time}",
+  "not_checked_in": "Du er ikke tjekket ind på et værelse.",
+  "temperature": "Temperatur",
+  "humidity": "Luftfugtighed",
+  "history": "Historik",
+  "history_empty": "Ingen målinger i perioden.",
+  "period": "Periode",
+  "period_24h": "24 timer",
+  "period_3d": "3 dage",
+  "period_7d": "7 dage",
+  "col_time": "Tidspunkt",
+  "col_temperature": "Temperatur",
+  "col_humidity": "Luftfugtighed"
 }

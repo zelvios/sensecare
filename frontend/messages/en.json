@@ -19,5 +19,20 @@
   "title_my_room": "My room - SenseCare",
   "title_overview": "Overview - SenseCare",
   "menu_open": "Open menu",
-  "menu_close": "Close menu"
+  "menu_close": "Close menu",
+  "room_heading": "Room {number}",
+  "checked_in_at": "Checked in {time}",
+  "last_reading": "Last reading {time}",
+  "not_checked_in": "You are not checked in to a room.",
+  "temperature": "Temperature",
+  "humidity": "Humidity",
+  "history": "History",
+  "history_empty": "No readings in this period.",
+  "period": "Period",
+  "period_24h": "24 hours",
+  "period_3d": "3 days",
+  "period_7d": "7 days",
+  "col_time": "Time",
+  "col_temperature": "Temperature",
+  "col_humidity": "Humidity"
 }
