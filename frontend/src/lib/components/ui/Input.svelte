@@ -43,7 +43,7 @@
       onblur={() => (focused = false)}
       aria-invalid={bad ? 'true' : undefined}
       aria-describedby={error ? `${id}-error` : undefined}
-      class="w-full rounded-lg border bg-base pt-6 pr-4 pb-2 pl-6 text-sm text-text shadow-sm transition focus:ring-2 focus:outline-none {bad
+      class="w-full rounded-lg border bg-canvas pt-6 pr-4 pb-2 pl-6 text-sm text-text shadow-sm transition focus:ring-2 focus:outline-none {bad
 				? 'border-danger/40 focus:border-transparent focus:ring-danger/30'
 				: 'border-surface-0 focus:border-transparent focus:ring-accent/30'}"
     />
