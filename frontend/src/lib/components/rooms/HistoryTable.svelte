@@ -15,8 +15,8 @@
       <thead class="bg-mantle text-left text-subtext">
         <tr>
           <th class="px-4 py-2 font-medium">{m.col_time()}</th>
-          <th class="px-4 py-2 text-right font-medium">{m.col_temperature()}</th>
-          <th class="px-4 py-2 text-right font-medium">{m.col_humidity()}</th>
+          <th class="px-4 py-2 text-right font-medium">{m.temperature()}</th>
+          <th class="px-4 py-2 text-right font-medium">{m.humidity()}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-surface-0 bg-canvas">
