@@ -18,11 +18,11 @@
   --color-subtext: #6c6f85;
   --color-overlay: #9ca0b0;
 
-  --color-accent: #1e66f5;   /* blue */
-  --color-ok: #40a02b;       /* green */
-  --color-warn: #df8e1d;     /* yellow */
-  --color-danger: #d20f39;   /* red */
-  --color-info: #04a5e5;     /* sky */
+  --color-accent: #1e66f5; /* blue */
+  --color-ok: #40a02b; /* green */
+  --color-warn: #df8e1d; /* yellow */
+  --color-danger: #d20f39; /* red */
+  --color-info: #04a5e5; /* sky */
 }
 
 @layer base {

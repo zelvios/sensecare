@@ -1,16 +1,20 @@
 <script lang="ts">
-  import {enhance} from '$app/forms';
+  import { enhance } from '$app/forms';
   import * as m from '$lib/paraglide/messages';
   import Button from '$lib/components/ui/Button.svelte';
   import Card from '$lib/components/ui/Card.svelte';
   import Input from '$lib/components/ui/Input.svelte';
   import LanguageSwitch from '$lib/components/layout/LanguageSwitch.svelte';
 
-  let {form} = $props();
+  let { form } = $props();
   let submitting = $state(false);
 
   const errorText = $derived(
-    form?.error === 'account_deactivated' ? m.login_deactivated() : form?.error ? m.login_failed() : null
+    form?.error === 'account_deactivated'
+      ? m.login_deactivated()
+      : form?.error
+        ? m.login_failed()
+        : null
   );
 </script>
 
@@ -32,12 +36,12 @@
       class="space-y-5"
       method="POST"
       use:enhance={() => {
-				submitting = true;
-				return async ({ update }) => {
-					await update();
-					submitting = false;
-				};
-			}}
+        submitting = true;
+        return async ({ update }) => {
+          await update();
+          submitting = false;
+        };
+      }}
     >
       <Input
         autocapitalize="off"

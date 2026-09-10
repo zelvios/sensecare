@@ -2,6 +2,6 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals }) => {
-	if (!locals.user) redirect(303, '/login');
-	redirect(303, locals.user.role === 'client' ? '/me' : '/staff');
+  if (!locals.user) redirect(303, '/login');
+  redirect(303, locals.user.role === 'client' ? '/me' : '/staff');
 };

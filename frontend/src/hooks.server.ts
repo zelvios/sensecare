@@ -11,44 +11,44 @@ import { clearSession, SESSION_COOKIE } from '$lib/server/session';
 import type { AuthenticatedUser } from '$lib/api/types';
 
 const originalHandle: Handle = async ({ event, resolve }) => {
-	const token = event.cookies.get(SESSION_COOKIE) ?? null;
+  const token = event.cookies.get(SESSION_COOKIE) ?? null;
 
-	event.locals.token = token;
-	event.locals.user = null;
+  event.locals.token = token;
+  event.locals.user = null;
 
-	if (token) {
-		try {
-			event.locals.user = await api<AuthenticatedUser>('/auth/me', { token, fetch: event.fetch });
-		} catch (e) {
-			// Expired, logged out elsewhere, or account deactivated: drop the cookie.
-			if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
-				clearSession(event.cookies);
-				event.locals.token = null;
-			} else {
-				throw e;
-			}
-		}
-	}
+  if (token) {
+    try {
+      event.locals.user = await api<AuthenticatedUser>('/auth/me', { token, fetch: event.fetch });
+    } catch (e) {
+      // Expired, logged out elsewhere, or account deactivated: drop the cookie.
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        clearSession(event.cookies);
+        event.locals.token = null;
+      } else {
+        throw e;
+      }
+    }
+  }
 
-	const response = await resolve(event);
+  const response = await resolve(event);
 
-	response.headers.set('x-content-type-options', 'nosniff');
-	response.headers.set('x-frame-options', 'DENY');
-	response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
+  response.headers.set('x-content-type-options', 'nosniff');
+  response.headers.set('x-frame-options', 'DENY');
+  response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
 
-	return response;
+  return response;
 };
 
 const handleParaglide: Handle = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request, locale }) => {
-		event.request = request;
+  paraglideMiddleware(event.request, ({ request, locale }) => {
+    event.request = request;
 
-		return resolve(event, {
-			transformPageChunk: ({ html }) =>
-				html
-					.replace('%paraglide.lang%', locale)
-					.replace('%paraglide.dir%', getTextDirection(locale))
-		});
-	});
+    return resolve(event, {
+      transformPageChunk: ({ html }) =>
+        html
+          .replace('%paraglide.lang%', locale)
+          .replace('%paraglide.dir%', getTextDirection(locale))
+    });
+  });
 
 export const handle = sequence(originalHandle, handleParaglide);

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import {afterNavigate} from '$app/navigation';
-  import {resolve} from '$app/paths';
-  import {Menu, X} from '@lucide/svelte';
+  import { afterNavigate } from '$app/navigation';
+  import { resolve } from '$app/paths';
+  import { Menu, X } from '@lucide/svelte';
   import LanguageSwitch from '$lib/components/layout/LanguageSwitch.svelte';
   import * as m from '$lib/paraglide/messages';
-  import type {AuthenticatedUser} from '$lib/api/types';
+  import type { AuthenticatedUser } from '$lib/api/types';
 
   type Link = { href: string; label: string };
 
@@ -32,7 +32,7 @@
   onclick={() => dialog.showModal()}
   type="button"
 >
-  <Menu aria-hidden="true" class="size-6"/>
+  <Menu aria-hidden="true" class="size-6" />
 </button>
 
 <dialog
@@ -49,18 +49,19 @@
         onclick={() => dialog.close()}
         type="button"
       >
-        <X aria-hidden="true" class="size-6"/>
+        <X aria-hidden="true" class="size-6" />
       </button>
     </div>
 
     <nav class="flex flex-1 flex-col gap-1 p-4">
       {#each links as link (link.href)}
         <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-        <a href={link.href}
-           aria-current={isActive(link.href) ? 'page' : undefined}
-           class="rounded-xl px-4 py-4 text-lg {isActive(link.href)
-        ? 'bg-accent/10 font-medium text-accent'
-        : 'hover:bg-surface-0/60'}"
+        <a
+          href={link.href}
+          aria-current={isActive(link.href) ? 'page' : undefined}
+          class="rounded-xl px-4 py-4 text-lg {isActive(link.href)
+            ? 'bg-accent/10 font-medium text-accent'
+            : 'hover:bg-surface-0/60'}"
         >
           {link.label}
         </a>

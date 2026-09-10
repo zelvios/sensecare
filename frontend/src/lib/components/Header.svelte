@@ -1,19 +1,19 @@
 <script lang="ts">
-  import {page} from '$app/state';
-  import {resolve} from '$app/paths';
+  import { page } from '$app/state';
+  import { resolve } from '$app/paths';
   import * as m from '$lib/paraglide/messages';
   import LanguageSwitch from '$lib/components/layout/LanguageSwitch.svelte';
   import PhoneMenu from '$lib/components/layout/PhoneMenu.svelte';
-  import type {AuthenticatedUser} from '$lib/api/types';
+  import type { AuthenticatedUser } from '$lib/api/types';
 
-  let {user}: { user: AuthenticatedUser } = $props();
+  let { user }: { user: AuthenticatedUser } = $props();
 
   const isStaff = $derived(user.role !== 'client');
 
   const links = $derived(
     isStaff
-      ? [{href: resolve('/staff'), label: m.nav_overview()}]
-      : [{href: resolve('/me'), label: m.nav_my_room()}]
+      ? [{ href: resolve('/staff'), label: m.nav_overview() }]
+      : [{ href: resolve('/me'), label: m.nav_my_room() }]
   );
 
   const roleLabels = $derived<Record<AuthenticatedUser['role'], string>>({
@@ -29,7 +29,7 @@
   <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
     <div class="flex items-center gap-6">
       <div class="md:hidden">
-        <PhoneMenu {isActive} {links} roleLabel={roleLabels[user.role]} {user}/>
+        <PhoneMenu {isActive} {links} roleLabel={roleLabels[user.role]} {user} />
       </div>
 
       <a class="font-semibold tracking-tight" href={resolve('/')}>SenseCare</a>
@@ -40,8 +40,8 @@
             href={link.href}
             aria-current={isActive(link.href) ? 'page' : undefined}
             class="rounded-md px-3 py-1.5 transition {isActive(link.href)
-          ? 'bg-accent/10 font-medium text-accent'
-          : 'text-subtext hover:bg-surface-0/60 hover:text-text'}"
+              ? 'bg-accent/10 font-medium text-accent'
+              : 'text-subtext hover:bg-surface-0/60 hover:text-text'}"
           >
             {link.label}
           </a>
@@ -50,7 +50,7 @@
     </div>
 
     <div class="hidden min-w-0 items-center gap-3 text-sm md:flex">
-      <LanguageSwitch class="shrink-0"/>
+      <LanguageSwitch class="shrink-0" />
 
       <p class="@container flex w-56 items-center gap-1">
         <span class="min-w-0 truncate" title={user.display_name}>{user.display_name}</span>
