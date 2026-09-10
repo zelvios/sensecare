@@ -1,12 +1,18 @@
+import { sequence } from '@sveltejs/kit/hooks';
+import { getTextDirection } from '$lib/paraglide/runtime';
+import { paraglideMiddleware } from '$lib/paraglide/server';
+
 // Runs before every request. Turns the session cookie into event.locals.user
 // by asking the API, so pages never trust the cookie alone.
 import type { Handle } from '@sveltejs/kit';
+
 import { api, ApiError } from '$lib/server/api';
 import { clearSession, SESSION_COOKIE } from '$lib/server/session';
 import type { AuthenticatedUser } from '$lib/api/types';
 
-export const handle: Handle = async ({ event, resolve }) => {
+const originalHandle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get(SESSION_COOKIE) ?? null;
+
 	event.locals.token = token;
 	event.locals.user = null;
 
@@ -25,8 +31,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const response = await resolve(event);
+
 	response.headers.set('x-content-type-options', 'nosniff');
 	response.headers.set('x-frame-options', 'DENY');
 	response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
+
 	return response;
 };
+
+const handleParaglide: Handle = ({ event, resolve }) =>
+	paraglideMiddleware(event.request, ({ request, locale }) => {
+		event.request = request;
+
+		return resolve(event, {
+			transformPageChunk: ({ html }) =>
+				html
+					.replace('%paraglide.lang%', locale)
+					.replace('%paraglide.dir%', getTextDirection(locale))
+		});
+	});
+
+export const handle = sequence(originalHandle, handleParaglide);

@@ -6,11 +6,9 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite preview",
 		"sync": "svelte-kit sync && paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
 		"prepare": "pnpm sync || echo ''",
 		"check": "pnpm sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "pnpm sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"ci": "pnpm lint && pnpm check && pnpm build",
