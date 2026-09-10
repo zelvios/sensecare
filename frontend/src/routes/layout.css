@@ -8,7 +8,7 @@
 
 @theme {
   --font-sans: 'Noto Sans Variable', ui-sans-serif, system-ui, sans-serif;
-  --color-base: #eff1f5;
+  --color-canvas: #eff1f5;
   --color-mantle: #e6e9ef;
   --color-crust: #dce0e8;
   --color-surface-0: #ccd0da;
