@@ -1,0 +1,23 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"app_tagline": "Indoor climate and service calls",
+	"nav_label": "Main menu",
+	"language": "Language",
+	"login_username": "Username",
+	"login_password": "Password",
+	"login_submit": "Log in",
+	"login_submitting": "Logging in…",
+	"login_failed": "Wrong username or password",
+	"login_deactivated": "This account has been deactivated",
+	"nav_overview": "Overview",
+	"nav_my_room": "My room",
+	"logout": "Log out",
+	"role_client": "Client",
+	"role_staff": "Staff",
+	"role_admin": "Administrator",
+	"title_login": "Log in - SenseCare",
+	"title_my_room": "My room - SenseCare",
+	"title_overview": "Overview - SenseCare",
+	"menu_open": "Open menu",
+	"menu_close": "Close menu"
+}
