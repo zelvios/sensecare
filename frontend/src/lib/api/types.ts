@@ -11,6 +11,10 @@ export type Stay = S['StayResponse'];
 export type Measurement = S['MeasurementResponse'];
 export type Threshold = S['ThresholdResponse'];
 
+export type RoomOverview = S['RoomOverviewResponse'];
+export type OpenCall = RoomOverview['open_calls'][number];
+export type OpenAlarm = RoomOverview['open_alarms'][number];
+
 /** History periods offered in the UI, in hours. */
-export const PERIOD_HOURS = [24, 72, 168] as const;
+export const PERIOD_HOURS = [24, 3 * 24, 7 * 24] as const;
 export type PeriodHours = (typeof PERIOD_HOURS)[number];
