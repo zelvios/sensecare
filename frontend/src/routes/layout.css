@@ -27,9 +27,15 @@
 
 @layer base {
   html {
-    font-family: var(--font-sans);
+    font-family: var(--font-sans), sans-serif;
     background: var(--color-mantle);
     color: var(--color-text);
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-surface-0);
   }
 
   button:not(:disabled),
