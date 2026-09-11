@@ -51,5 +51,22 @@
   "search_rooms": "Search floor, number or name",
   "search_no_match": "No rooms match the search.",
   "clear": "Clear",
-  "all_floors": "All floors"
+  "all_floors": "All floors",
+  "occupant": "Occupant",
+  "device": "Device",
+  "device_none": "No device",
+  "device_online": "Device online",
+  "calls": "Service calls",
+  "calls_none": "No service calls recorded.",
+  "alarms": "Alarms",
+  "alarms_none": "No open alarms.",
+  "status_open": "Open",
+  "status_in_progress": "In progress",
+  "status_closed": "Closed",
+  "acknowledged": "Seen",
+  "unacknowledged": "New",
+  "limits": "Limits",
+  "limits_source": "Limits from",
+  "limits_room": "this room's own settings",
+  "limits_global": "the global default"
 }

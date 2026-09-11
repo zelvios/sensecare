@@ -51,5 +51,22 @@
   "search_rooms": "Søg etage, nummer eller navn",
   "search_no_match": "Ingen værelser matcher søgningen.",
   "clear": "Ryd",
-  "all_floors": "Alle etager"
+  "all_floors": "Alle etager",
+  "occupant": "Beboer",
+  "device": "Enhed",
+  "device_none": "Ingen enhed",
+  "device_online": "Enhed online",
+  "calls": "Tilkald",
+  "calls_none": "Ingen tilkald registreret.",
+  "alarms": "Alarmer",
+  "alarms_none": "Ingen åbne alarmer.",
+  "status_open": "Åben",
+  "status_in_progress": "Håndteres",
+  "status_closed": "Afsluttet",
+  "acknowledged": "Set",
+  "unacknowledged": "Ny",
+  "limits": "Grænser",
+  "limits_source": "Grænser fra",
+  "limits_room": "værelsets egne indstillinger",
+  "limits_global": "den globale standard"
 }
