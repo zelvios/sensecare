@@ -30,16 +30,19 @@
 {:else}
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="text-xl font-semibold">
-        {m.room_heading({ number: data.stay.room_number })}
+      <h1 class="text-xl font-semibold num">
+        {m.room_heading()}
+        {data.stay.room_number}
       </h1>
-      <p class="mt-1 text-sm text-subtext">
-        {m.checked_in_at({ time: fmtDateTime(data.stay.checked_in_at) })}
+      <p class="mt-1 text-sm text-subtext num">
+        {m.checked_in_at()}
+        {fmtDateTime(data.stay.checked_in_at)}
       </p>
     </div>
     {#if data.latest}
-      <p class="text-sm text-subtext">
-        {m.last_reading({ time: fmtDateTime(data.latest.measured_at) })}
+      <p class="text-sm text-subtext num">
+        {m.last_reading()}
+        {fmtDateTime(data.latest.measured_at)}
       </p>
     {/if}
   </div>
