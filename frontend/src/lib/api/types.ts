@@ -15,6 +15,9 @@ export type RoomOverview = S['RoomOverviewResponse'];
 export type OpenCall = RoomOverview['open_calls'][number];
 export type OpenAlarm = RoomOverview['open_alarms'][number];
 
+export type ServiceCall = S['ServiceCallResponse'];
+export type Alarm = S['AlarmResponse'];
+
 /** History periods offered in the UI, in hours. */
 export const PERIOD_HOURS = [24, 3 * 24, 7 * 24] as const;
 export type PeriodHours = (typeof PERIOD_HOURS)[number];
