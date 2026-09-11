@@ -69,8 +69,9 @@
     </ReadingCard>
   </div>
 
-  <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
+  <div class="mt-8 flex items-center gap-3">
     <h2 class="text-lg font-semibold">{m.history()}</h2>
+    <span class="h-px flex-1 bg-surface-0" aria-hidden="true"></span>
     <PeriodPicker current={data.hours} />
   </div>
   <div class="mt-3">
