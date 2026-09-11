@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import { Bell, BellRing, Droplets, Thermometer } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
-  import { fmtTime } from '$lib/utils/format';
+  import { fmtDateTimeSec } from '$lib/utils/format';
   import type { RoomOverview } from '$lib/api/types';
 
   let { rooms }: { rooms: RoomOverview[] } = $props();
@@ -91,7 +91,7 @@
 
             <span class="shrink-0 font-medium num">{a.roomLabel}</span>
             <span class="min-w-0 flex-1 truncate text-subtext">{a.label}</span>
-            <span class="shrink-0 text-sm text-subtext num">{fmtTime(a.at)}</span>
+            <span class="shrink-0 text-sm text-subtext num">{fmtDateTimeSec(a.at)}</span>
           </a>
         </li>
       {/each}

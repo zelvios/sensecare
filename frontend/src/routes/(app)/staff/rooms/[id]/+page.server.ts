@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { api, ApiError } from '$lib/server/api';
+import { act } from '$lib/server/actions';
 import {
   type Measurement,
   PERIOD_HOURS,
@@ -52,4 +53,36 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
     calls,
     canManage: locals.user?.role === 'admin'
   };
+};
+
+export const actions: Actions = {
+  acknowledgeCall: async ({ request, locals, fetch }) => {
+    const id = String((await request.formData()).get('id'));
+    return act(() =>
+      api(`/service-calls/${id}/acknowledge`, { method: 'POST', token: locals.token, fetch })
+    );
+  },
+  closeCall: async ({ request, locals, fetch }) => {
+    const form = await request.formData();
+    const id = String(form.get('id'));
+    const note = String(form.get('note') ?? '').trim() || undefined;
+    return act(() =>
+      api(`/service-calls/${id}/close`, {
+        method: 'POST',
+        body: { note },
+        token: locals.token,
+        fetch
+      })
+    );
+  },
+  acknowledgeAlarm: async ({ request, locals, fetch }) => {
+    const id = String((await request.formData()).get('id'));
+    return act(() =>
+      api(`/alarms/${id}/acknowledge`, { method: 'POST', token: locals.token, fetch })
+    );
+  },
+  resolveAlarm: async ({ request, locals, fetch }) => {
+    const id = String((await request.formData()).get('id'));
+    return act(() => api(`/alarms/${id}/resolve`, { method: 'POST', token: locals.token, fetch }));
+  }
 };
