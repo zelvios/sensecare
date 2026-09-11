@@ -12,7 +12,7 @@
 {:else}
   <div class="overflow-x-auto rounded-2xl ring-1 ring-surface-0">
     <table class="w-full text-sm">
-      <thead class="bg-mantle text-left text-subtext">
+      <thead class="bg-crust text-left text-subtext">
         <tr>
           <th class="px-4 py-2 font-medium">{m.col_time()}</th>
           <th class="px-4 py-2 text-right font-medium">{m.temperature()}</th>
