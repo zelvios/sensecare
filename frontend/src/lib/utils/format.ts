@@ -17,3 +17,9 @@ export function fmtTemp(c: number): string {
 export function fmtHumidity(pct: number): string {
   return `${new Intl.NumberFormat(getLocale(), { maximumFractionDigits: 0 }).format(pct)} %`;
 }
+
+export function fmtDateTimeSec(iso: string): string {
+  return new Intl.DateTimeFormat(getLocale(), { dateStyle: 'short', timeStyle: 'medium' }).format(
+    new Date(iso)
+  );
+}
