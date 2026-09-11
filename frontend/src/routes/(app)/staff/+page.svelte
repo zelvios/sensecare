@@ -72,7 +72,7 @@
   <div class="flex flex-wrap items-center justify-between gap-4">
     <h1 class="text-3xl font-semibold tracking-tight">{m.nav_overview()}</h1>
     <div class="flex items-center gap-2 text-sm text-subtext">
-      <span class="num">{m.updated_at({ time: fmtDateTime(data.loadedAt) })}</span>
+      <span class="num">{m.updated_at()} {fmtDateTime(data.loadedAt)}</span>
       <button
         aria-label={m.refresh()}
         class="rounded-md p-1.5 transition hover:bg-surface-0/60 hover:text-text disabled:opacity-60"

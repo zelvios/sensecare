@@ -29,6 +29,10 @@
         : 'ring-1 ring-surface-0'
   );
 
+  const heading = $derived(
+    floor !== null ? `${m.floor()} ${floor}, ${r.room.room_number}` : r.room.room_number
+  );
+
   /** Colour for a reading: red while its alarm is unacknowledged, orange once acknowledged. */
   function tone(prefix: 'temperature' | 'humidity'): string {
     const alarms = r.open_alarms.filter((a) => a.kind.startsWith(prefix));
@@ -43,9 +47,7 @@
 >
   <div class="flex items-start justify-between gap-2">
     <div class="min-w-0">
-      <p class="text-lg font-semibold num">
-        {#if floor !== null}{m.floor({ number: floor })},{/if}{r.room.room_number}
-      </p>
+      <p class="text-lg font-semibold num">{heading}</p>
       {#if r.room.name}
         <p class="truncate text-sm text-subtext">{r.room.name}</p>
       {/if}

@@ -20,8 +20,7 @@
   /** "Floor 2, 12 - Kardiologi", the same wording as the room card. */
   function roomLabel(room: RoomOverview['room']): string {
     const floor = room.floor ?? null;
-    const head =
-      floor !== null ? `${m.floor({ number: floor })}, ${room.room_number}` : room.room_number;
+    const head = floor !== null ? `${m.floor()} ${floor}, ${room.room_number}` : room.room_number;
     return room.name ? `${head} - ${room.name}` : head;
   }
 
