@@ -4,7 +4,8 @@
 
   const sections = [
     { href: resolve('/admin/rooms'), title: m.admin_rooms(), text: m.admin_rooms_text() },
-    { href: resolve('/staff/calls'), title: m.calls(), text: m.admin_calls_text() }
+    { href: resolve('/staff/calls'), title: m.calls(), text: m.admin_calls_text() },
+    { href: resolve('/admin/accounts'), title: m.admin_accounts(), text: m.admin_accounts_text() }
   ];
 </script>
 
