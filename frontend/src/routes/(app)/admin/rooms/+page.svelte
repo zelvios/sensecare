@@ -7,6 +7,7 @@
   import Dialog from '$lib/components/ui/Dialog.svelte';
   import RoomFilterBar from '$lib/components/rooms/RoomFilterBar.svelte';
   import { filterRooms, type FloorFilter, floorsOf } from '$lib/utils/rooms';
+  import { actionState } from '$lib/utils/forms.svelte';
   import RoomForm from './RoomForm.svelte';
   import type { Room } from '$lib/api/types';
 
@@ -54,41 +55,15 @@
     return sortDir === 'asc' ? list : list.reverse();
   });
 
-  /** The error of the most recent action, cleared whenever a dialog opens or closes. */
-  let error = $state<string | null>(null);
+  const a = actionState();
 
   const errorText = $derived.by(() => {
-    if (!error) return null;
-    if (error === 'already_exists') return m.room_number_taken();
-    if (error === 'invalid_reference') return m.room_in_use();
-    if (error === 'bad_request') return m.room_invalid();
+    if (!a.error) return null;
+    if (a.error === 'already_exists') return m.room_number_taken();
+    if (a.error === 'invalid_reference') return m.room_in_use();
+    if (a.error === 'bad_request') return m.room_invalid();
     return m.action_failed();
   });
-
-  const track =
-    (onSuccess?: () => void) =>
-    () =>
-    async ({
-      update,
-      result
-    }: {
-      update: () => Promise<void>;
-      result: { type: string; data?: { error?: string } };
-    }) => {
-      await update();
-      error = result.type === 'failure' ? (result.data?.error ?? 'unknown') : null;
-      if (result.type === 'success') onSuccess?.();
-    };
-
-  function open(fn: () => void) {
-    error = null;
-    fn();
-  }
-
-  function close(fn: () => void) {
-    error = null;
-    fn();
-  }
 
   function floorLabel(r: Room) {
     return r.floor === null || r.floor === undefined ? '' : `${m.floor()} ${r.floor}`;
@@ -141,7 +116,7 @@
       {activeCount} / {data.rooms.length}
     </span>
   </div>
-  <Button onclick={() => open(() => (creating = true))}>{m.room_create()}</Button>
+  <Button onclick={() => a.open(() => (creating = true))}>{m.room_create()}</Button>
 </div>
 
 <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -186,19 +161,19 @@
               <Button
                 variant="accent-soft"
                 class="px-3 py-1 text-xs"
-                onclick={() => open(() => (editing = r))}
+                onclick={() => a.open(() => (editing = r))}
               >
                 {m.edit()}
               </Button>
               {#if r.is_active}
-                <form method="POST" action="?/deactivate" use:enhance={track()}>
+                <form method="POST" action="?/deactivate" use:enhance={a.track()}>
                   <input type="hidden" name="id" value={r.id} />
                   <Button type="submit" variant="warn-soft" class="px-3 py-1 text-xs">
                     {m.deactivate()}
                   </Button>
                 </form>
               {:else}
-                <form method="POST" action="?/activate" use:enhance={track()}>
+                <form method="POST" action="?/activate" use:enhance={a.track()}>
                   <input type="hidden" name="id" value={r.id} />
                   <Button type="submit" variant="ok-soft" class="px-3 py-1 text-xs">
                     {m.activate()}
@@ -207,7 +182,7 @@
                 <Button
                   variant="danger-soft"
                   class="px-3 py-1 text-xs"
-                  onclick={() => open(() => (deleting = r))}
+                  onclick={() => a.open(() => (deleting = r))}
                 >
                   {m.delete()}
                 </Button>
@@ -224,45 +199,50 @@
   <p class="mt-3 text-sm text-subtext">{m.search_no_match()}</p>
 {/if}
 
-<Dialog open={creating} onclose={() => close(() => (creating = false))} title={m.room_create()}>
+<Dialog open={creating} onclose={() => a.close(() => (creating = false))} title={m.room_create()}>
   <form
     action="?/create"
     id="room-create"
     method="POST"
-    use:enhance={track(() => (creating = false))}
+    use:enhance={a.track(() => (creating = false))}
   >
     <RoomForm />
   </form>
   {@render errorLine()}
   {#snippet footer()}
-    <Button variant="secondary" onclick={() => close(() => (creating = false))}>
+    <Button variant="secondary" onclick={() => a.close(() => (creating = false))}>
       {m.cancel()}
     </Button>
     <Button type="submit" form="room-create">{m.save()}</Button>
   {/snippet}
 </Dialog>
 
-<Dialog open={editing !== null} onclose={() => close(() => (editing = null))} title={m.room_edit()}>
+<Dialog
+  open={editing !== null}
+  onclose={() => a.close(() => (editing = null))}
+  title={m.room_edit()}
+>
   {#if editing}
     <form
       id="room-edit"
       method="POST"
       action="?/update"
-      use:enhance={track(() => (editing = null))}
+      use:enhance={a.track(() => (editing = null))}
     >
       <RoomForm room={editing} />
     </form>
   {/if}
   {@render errorLine()}
   {#snippet footer()}
-    <Button variant="secondary" onclick={() => close(() => (editing = null))}>{m.cancel()}</Button>
+    <Button variant="secondary" onclick={() => a.close(() => (editing = null))}>{m.cancel()}</Button
+    >
     <Button type="submit" form="room-edit">{m.save()}</Button>
   {/snippet}
 </Dialog>
 
 <Dialog
   open={deleting !== null}
-  onclose={() => close(() => (deleting = null))}
+  onclose={() => a.close(() => (deleting = null))}
   title={m.room_delete()}
 >
   {#if deleting}
@@ -274,14 +254,16 @@
       id="room-delete"
       method="POST"
       action="?/delete"
-      use:enhance={track(() => (deleting = null))}
+      use:enhance={a.track(() => (deleting = null))}
     >
       <input type="hidden" name="id" value={deleting.id} />
     </form>
   {/if}
   {@render errorLine()}
   {#snippet footer()}
-    <Button variant="secondary" onclick={() => close(() => (deleting = null))}>{m.cancel()}</Button>
+    <Button variant="secondary" onclick={() => a.close(() => (deleting = null))}
+      >{m.cancel()}</Button
+    >
     <Button type="submit" variant="danger" form="room-delete">{m.delete()}</Button>
   {/snippet}
 </Dialog>
