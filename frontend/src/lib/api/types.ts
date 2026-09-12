@@ -18,6 +18,9 @@ export type OpenAlarm = RoomOverview['open_alarms'][number];
 export type ServiceCall = S['ServiceCallResponse'];
 export type Alarm = S['AlarmResponse'];
 
+export type User = S['UserResponse'];
+export type AuditEntry = S['AuditEntry'];
+
 export type Room = S['Room'];
 
 /** History periods offered in the UI, in hours. */
