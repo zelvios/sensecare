@@ -23,6 +23,8 @@
   --color-warn: #df8e1d; /* yellow */
   --color-danger: #d20f39; /* red */
   --color-info: #04a5e5; /* sky */
+  --color-mauve: #8839ef; /* for categories only */
+  --color-teal: #179299; /* for categories only */
 }
 
 @layer base {
