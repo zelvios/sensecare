@@ -28,7 +28,7 @@
   const isActive = (href: string) => page.url.pathname.startsWith(href);
 </script>
 
-<header class="border-b border-surface-0 bg-canvas">
+<header class="sticky top-0 z-20 border-b border-surface-0 bg-canvas">
   <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
     <div class="flex items-center gap-6">
       <div class="md:hidden">

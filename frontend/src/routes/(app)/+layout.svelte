@@ -5,6 +5,6 @@
 
 <Header user={data.user} />
 
-<main class="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-4 py-6">
+<main class="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-6">
   {@render children()}
 </main>
