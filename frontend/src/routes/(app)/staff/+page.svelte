@@ -1,50 +1,29 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { RefreshCw, Search, X } from '@lucide/svelte';
+  import { RefreshCw } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
-  import { fmtDateTime } from '$lib/utils/format';
+  import { fmtDateTimeSec } from '$lib/utils/format';
+  import RoomFilterBar from '$lib/components/rooms/RoomFilterBar.svelte';
+  import { filterRooms, type FloorFilter, floorsOf } from '$lib/utils/rooms';
   import AlertsStrip from './AlertsStrip.svelte';
   import RoomCard from './RoomCard.svelte';
 
   let { data } = $props();
   let refreshing = $state(false);
   let query = $state('');
-  let floorFilter = $state<'all' | number>('all');
+  let floor = $state<FloorFilter>('all');
 
-  // Distinct floors present in the data, lowest first. Rooms without a floor are not listed.
-  const floors = $derived(
-    [...new Set(data.rooms.map((r) => r.room.floor).filter((f): f is number => f != null))].sort(
-      (a, b) => a - b
-    )
+  const floors = $derived(floorsOf(data.rooms.map((r) => r.room)));
+
+  const visible = $derived(
+    filterRooms(
+      data.rooms.map((r) => ({ ...r.room, overview: r })),
+      query,
+      floor
+    ).map((x) => x.overview)
   );
 
-  const visible = $derived.by(() => {
-    const onFloor =
-      floorFilter === 'all'
-        ? data.rooms
-        : data.rooms.filter(({ room }) => room.floor === floorFilter);
-
-    const q = query.trim().toLowerCase();
-    if (!q) return onFloor;
-
-    const floorWord = m.floor().toLowerCase();
-    const byFloor = q.match(new RegExp(`^${floorWord}\\s*(\\d+)$`));
-    if (byFloor) {
-      const wanted = Number(byFloor[1]);
-      return onFloor.filter(({ room }) => room.floor === wanted);
-    }
-
-    return onFloor.filter(({ room }) => {
-      const floor = room.floor === null || room.floor === undefined ? '' : String(room.floor);
-      return (
-        floor === q ||
-        room.room_number.toLowerCase().includes(q) ||
-        (room.name ?? '').toLowerCase().includes(q)
-      );
-    });
-  });
-
-  const filtering = $derived(query.trim() !== '' || floorFilter !== 'all');
+  const filtering = $derived(query.trim() !== '' || floor !== 'all');
 
   async function refresh() {
     refreshing = true;
@@ -72,7 +51,7 @@
   <div class="flex flex-wrap items-center justify-between gap-4">
     <h1 class="text-3xl font-semibold tracking-tight">{m.nav_overview()}</h1>
     <div class="flex items-center gap-2 text-sm text-subtext">
-      <span class="num">{m.updated_at()} {fmtDateTime(data.loadedAt)}</span>
+      <span class="num">{m.updated_at()} {fmtDateTimeSec(data.loadedAt)}</span>
       <button
         aria-label={m.refresh()}
         class="rounded-md p-1.5 transition hover:bg-surface-0/60 hover:text-text disabled:opacity-60"
@@ -92,52 +71,15 @@
   <section aria-labelledby="rooms-heading" class="mt-8 flex min-h-0 flex-1 flex-col">
     <div class="flex shrink-0 flex-wrap items-center gap-3">
       <h2 class="text-lg font-semibold" id="rooms-heading">{m.rooms()}</h2>
-      <span class="h-px flex-1 bg-surface-0 sm:hidden" aria-hidden="true"></span>
+      <span aria-hidden="true" class="h-px flex-1 bg-surface-0 sm:hidden"></span>
       <span class="text-sm text-subtext num sm:hidden">
         {#if filtering}{visible.length} /
         {/if}{data.rooms.length}
       </span>
 
-      <div class="flex w-full items-center gap-2 sm:w-auto">
-        <label class="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
-          <Search
-            aria-hidden="true"
-            class="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-overlay"
-          />
-          <span class="sr-only">{m.search_rooms()}</span>
-          <input
-            type="search"
-            bind:value={query}
-            placeholder={m.search_rooms()}
-            class="w-full rounded-md border bg-canvas py-1 pr-7 pl-8 text-sm placeholder:text-overlay focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
-          />
-          {#if query}
-            <button
-              type="button"
-              onclick={() => (query = '')}
-              aria-label={m.clear()}
-              class="absolute top-1/2 right-1 -translate-y-1/2 rounded p-1 text-overlay hover:text-text"
-            >
-              <X class="size-3.5" aria-hidden="true" />
-            </button>
-          {/if}
-        </label>
+      <RoomFilterBar bind:floor bind:query class="w-full sm:w-auto" {floors} />
 
-        <label class="shrink-0">
-          <span class="sr-only">{m.floor()}</span>
-          <select
-            bind:value={floorFilter}
-            class="rounded-md border bg-canvas py-1 pr-7 pl-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
-          >
-            <option value="all">{m.all_floors()}</option>
-            {#each floors as f (f)}
-              <option value={f}>{m.floor()} {f}</option>
-            {/each}
-          </select>
-        </label>
-      </div>
-
-      <span class="hidden h-px flex-1 bg-surface-0 sm:block" aria-hidden="true"></span>
+      <span aria-hidden="true" class="hidden h-px flex-1 bg-surface-0 sm:block"></span>
       <span class="hidden text-sm text-subtext num sm:inline">
         {#if filtering}{visible.length} /
         {/if}{data.rooms.length}
