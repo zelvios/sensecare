@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { ChevronLeft, ChevronRight, Search, X } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
   import Button from '$lib/components/ui/Button.svelte';
   import Dialog from '$lib/components/ui/Dialog.svelte';
@@ -14,7 +15,6 @@
   const a = actionState();
 
   type Status = ServiceCall['status'];
-  let statusFilter = $state<Status | 'all'>('all');
   let simulating = $state(false);
   let closing = $state<ServiceCall | null>(null);
 
@@ -30,9 +30,26 @@
   };
   const statusRank: Record<Status, number> = { open: 0, in_progress: 1, closed: 2 };
 
-  const visible = $derived(
-    statusFilter === 'all' ? data.calls : data.calls.filter((c) => c.status === statusFilter)
-  );
+  const pageSizes = [5, 10, 15, 20, 30];
+  let query = $state('');
+  let statusFilter = $state<Status | 'all'>('all');
+  let pageSize = $state(10);
+  let page = $state(1);
+
+  const filtered = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    return data.calls.filter((c) => {
+      if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        c.room_number.toLowerCase().includes(q) ||
+        statusLabel[c.status]().toLowerCase().includes(q) ||
+        (c.note ?? '').toLowerCase().includes(q) ||
+        fmtDateTimeSec(c.created_at).includes(q)
+      );
+    });
+  });
+  const filtering = $derived(query.trim() !== '' || statusFilter !== 'all');
 
   type SortKey = 'room' | 'status' | 'created_at' | 'acknowledged_at' | 'closed_at';
   let sortKey = $state<SortKey>('created_at');
@@ -44,6 +61,7 @@
       sortKey = key;
       sortDir = key === 'room' || key === 'status' ? 'asc' : 'desc';
     }
+    page = 1;
   }
 
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
@@ -61,9 +79,16 @@
   };
 
   const sorted = $derived.by(() => {
-    const list = [...visible].sort(compare[sortKey]);
+    const list = [...filtered].sort(compare[sortKey]);
     return sortDir === 'asc' ? list : list.reverse();
   });
+
+  const pageCount = $derived(Math.max(1, Math.ceil(sorted.length / pageSize)));
+  $effect(() => {
+    if (page > pageCount) page = pageCount;
+  });
+  const start = $derived((page - 1) * pageSize);
+  const visible = $derived(sorted.slice(start, start + pageSize));
 
   const errorText = $derived.by(() => {
     if (!a.error) return null;
@@ -118,11 +143,40 @@
   {/if}
 </div>
 
-<div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-  <label class="flex items-center gap-2 text-sm">
-    <span class="text-subtext">{m.status()}</span>
+<div class="mt-6 flex flex-wrap items-center gap-2">
+  <label class="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+    <Search
+      aria-hidden="true"
+      class="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-overlay"
+    />
+    <span class="sr-only">{m.search_calls()}</span>
+    <input
+      type="search"
+      bind:value={query}
+      oninput={() => (page = 1)}
+      placeholder={m.search_calls()}
+      class="w-full rounded-md border bg-canvas py-1 pr-7 pl-8 text-sm placeholder:text-overlay focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
+    />
+    {#if query}
+      <button
+        type="button"
+        onclick={() => {
+          query = '';
+          page = 1;
+        }}
+        aria-label={m.clear()}
+        class="absolute top-1/2 right-1 -translate-y-1/2 rounded p-1 text-overlay hover:text-text"
+      >
+        <X class="size-3.5" aria-hidden="true" />
+      </button>
+    {/if}
+  </label>
+
+  <label class="shrink-0">
+    <span class="sr-only">{m.status()}</span>
     <select
       bind:value={statusFilter}
+      onchange={() => (page = 1)}
       class="rounded-md border bg-canvas py-1 pr-7 pl-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
     >
       <option value="all">{m.all()}</option>
@@ -131,8 +185,22 @@
       <option value="closed">{m.status_closed()}</option>
     </select>
   </label>
-  <span class="text-sm text-subtext num">
-    {#if statusFilter !== 'all'}{visible.length} /
+
+  <label class="shrink-0">
+    <span class="sr-only">{m.per_page()}</span>
+    <select
+      bind:value={pageSize}
+      onchange={() => (page = 1)}
+      class="rounded-md border bg-canvas py-1 pr-7 pl-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
+    >
+      {#each pageSizes as n (n)}
+        <option value={n}>{n} {m.per_page_suffix()}</option>
+      {/each}
+    </select>
+  </label>
+
+  <span class="ml-auto text-sm text-subtext num">
+    {#if filtering}{filtered.length} /
     {/if}{data.calls.length}
   </span>
 </div>
@@ -141,73 +209,105 @@
   {@render errorLine()}
 {/if}
 
-<div class="mt-4 overflow-x-auto rounded-2xl bg-canvas ring-1 ring-surface-0">
-  <table class="w-full text-sm">
-    <thead class="bg-crust text-left text-subtext">
-      <tr>
-        {@render sortHeader('room', m.room_heading())}
-        {@render sortHeader('status', m.status())}
-        {@render sortHeader('created_at', m.created())}
-        {@render sortHeader('acknowledged_at', m.acknowledged_at())}
-        {@render sortHeader('closed_at', m.closed())}
-        <th class="px-4 py-2 font-medium">{m.note()}</th>
-        <th class="px-4 py-2"></th>
-      </tr>
-    </thead>
-    <tbody class="divide-y">
-      {#each sorted as c (c.id)}
-        <tr>
-          <td class="px-4 py-2 font-medium num">
-            <a
-              href={resolve('/(app)/staff/rooms/[id]', { id: c.room_id })}
-              class="hover:text-accent"
-            >
-              {c.room_number}
-            </a>
-          </td>
-          <td class="px-4 py-2">
-            <span class="rounded-full px-2 py-0.5 text-xs font-medium {statusTone[c.status]}">
-              {statusLabel[c.status]()}
-            </span>
-          </td>
-          <td class="px-4 py-2 num">{fmtDateTimeSec(c.created_at)}</td>
-          <td class="px-4 py-2 num">{c.acknowledged_at ? fmtDateTimeSec(c.acknowledged_at) : ''}</td
-          >
-          <td class="px-4 py-2 num">{c.closed_at ? fmtDateTimeSec(c.closed_at) : ''}</td>
-          <td class="max-w-xs truncate px-4 py-2 text-subtext" title={c.note ?? ''}
-            >{c.note ?? ''}</td
-          >
-          <td class="px-4 py-2">
-            <div class="flex justify-end gap-2">
-              {#if c.status === 'open'}
-                <form method="POST" action="?/acknowledge" use:enhance={a.track()}>
-                  <input type="hidden" name="id" value={c.id} />
-                  <Button type="submit" variant="warn-soft" class="px-3 py-1 text-xs">
-                    {m.acknowledge()}
-                  </Button>
-                </form>
-              {/if}
-              {#if c.status !== 'closed'}
-                <Button
-                  variant="danger-soft"
-                  class="px-3 py-1 text-xs"
-                  onclick={() => a.open(() => (closing = c))}
-                >
-                  {m.close_call()}
-                </Button>
-              {/if}
-            </div>
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-</div>
-
 {#if data.calls.length === 0}
-  <p class="mt-3 text-sm text-subtext">{m.calls_none()}</p>
-{:else if visible.length === 0}
-  <p class="mt-3 text-sm text-subtext">{m.search_no_match()}</p>
+  <p class="mt-4 text-sm text-subtext">{m.calls_none()}</p>
+{:else if filtered.length === 0}
+  <p class="mt-4 text-sm text-subtext">{m.calls_no_match()}</p>
+{:else}
+  <div class="mt-4 rounded-2xl bg-canvas ring-1 ring-surface-0 max-sm:overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="sticky top-14 z-10 bg-crust text-left text-subtext">
+        <tr>
+          {@render sortHeader('room', m.room_heading())}
+          {@render sortHeader('status', m.status())}
+          {@render sortHeader('created_at', m.created())}
+          {@render sortHeader('acknowledged_at', m.acknowledged_at())}
+          {@render sortHeader('closed_at', m.closed())}
+          <th class="px-4 py-2 font-medium">{m.note()}</th>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {#each visible as c (c.id)}
+          <tr>
+            <td class="px-4 py-2 font-medium num">
+              <a
+                href={resolve('/(app)/staff/rooms/[id]', { id: c.room_id })}
+                class="hover:text-accent"
+              >
+                {c.room_number}
+              </a>
+            </td>
+            <td class="px-4 py-2">
+              <span class="rounded-full px-2 py-0.5 text-xs font-medium {statusTone[c.status]}">
+                {statusLabel[c.status]()}
+              </span>
+            </td>
+            <td class="px-4 py-2 num">{fmtDateTimeSec(c.created_at)}</td>
+            <td class="px-4 py-2 num">
+              {c.acknowledged_at ? fmtDateTimeSec(c.acknowledged_at) : ''}
+            </td>
+            <td class="px-4 py-2 num">{c.closed_at ? fmtDateTimeSec(c.closed_at) : ''}</td>
+            <td class="max-w-xs truncate px-4 py-2 text-subtext" title={c.note ?? ''}>
+              {c.note ?? ''}
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex justify-end gap-2">
+                {#if c.status === 'open'}
+                  <form method="POST" action="?/acknowledge" use:enhance={a.track()}>
+                    <input type="hidden" name="id" value={c.id} />
+                    <Button type="submit" variant="warn-soft" class="px-3 py-1 text-xs">
+                      {m.acknowledge()}
+                    </Button>
+                  </form>
+                {/if}
+                {#if c.status !== 'closed'}
+                  <Button
+                    variant="danger-soft"
+                    class="px-3 py-1 text-xs"
+                    onclick={() => a.open(() => (closing = c))}
+                  >
+                    {m.close_call()}
+                  </Button>
+                {/if}
+              </div>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
+
+  {#if pageCount > 1}
+    <div class="mt-3 flex items-center justify-between text-sm text-subtext">
+      <span class="num">
+        {start + 1}-{Math.min(start + pageSize, sorted.length)}
+        {m.of()}
+        {sorted.length}
+      </span>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          onclick={() => (page = Math.max(1, page - 1))}
+          disabled={page === 1}
+          aria-label={m.page_prev()}
+          class="rounded-md p-1.5 hover:bg-surface-0/60 hover:text-text disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          <ChevronLeft class="size-4" aria-hidden="true" />
+        </button>
+        <span class="px-1 num">{page} / {pageCount}</span>
+        <button
+          type="button"
+          onclick={() => (page = Math.min(pageCount, page + 1))}
+          disabled={page === pageCount}
+          aria-label={m.page_next()}
+          class="rounded-md p-1.5 hover:bg-surface-0/60 hover:text-text disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          <ChevronRight class="size-4" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  {/if}
 {/if}
 
 <Dialog
@@ -271,8 +371,9 @@
   {/if}
   {@render errorLine()}
   {#snippet footer()}
-    <Button variant="secondary" onclick={() => a.close(() => (closing = null))}>{m.cancel()}</Button
-    >
+    <Button variant="secondary" onclick={() => a.close(() => (closing = null))}>
+      {m.cancel()}
+    </Button>
     <Button type="submit" variant="danger" form="call-close">{m.confirm_close()}</Button>
   {/snippet}
 </Dialog>

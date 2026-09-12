@@ -130,9 +130,9 @@
   {@render errorLine()}
 {/if}
 
-<div class="mt-4 overflow-x-auto rounded-2xl bg-canvas ring-1 ring-surface-0">
+<div class="mt-4 rounded-2xl bg-canvas ring-1 ring-surface-0 max-sm:overflow-x-auto">
   <table class="w-full text-sm">
-    <thead class="bg-crust text-left text-subtext">
+    <thead class="sticky top-14 z-10 bg-crust text-left text-subtext">
       <tr>
         {@render sortHeader('room_number', m.room_number())}
         {@render sortHeader('name', m.room_name())}
