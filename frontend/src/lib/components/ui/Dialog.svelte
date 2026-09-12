@@ -4,12 +4,14 @@
   import * as m from '$lib/paraglide/messages';
 
   let {
-    open = $bindable(false),
+    open,
+    onclose,
     title,
     children,
     footer
   }: {
-    open?: boolean;
+    open: boolean;
+    onclose: () => void;
     title: string;
     children: Snippet;
     footer?: Snippet;
@@ -24,17 +26,20 @@
   });
 
   function onBackdropClick(e: MouseEvent) {
-    if (e.target === dialog) open = false;
+    if (e.target === dialog) onclose();
   }
 </script>
 
 <dialog
   aria-labelledby={titleId}
   bind:this={dialog}
-  class="fixed inset-x-0 bottom-0 m-0 w-full max-w-none bg-transparent p-0
-    backdrop:bg-crust/60 sm:inset-auto sm:m-auto sm:max-w-md"
+  class="fixed inset-x-0 bottom-0 m-0 w-full max-w-none bg-transparent p-0 backdrop:bg-crust/60
+    sm:inset-0 sm:m-auto sm:h-fit sm:max-w-md"
+  oncancel={(e) => {
+    e.preventDefault();
+    onclose();
+  }}
   onclick={onBackdropClick}
-  onclose={() => (open = false)}
 >
   <div
     class="rounded-t-2xl bg-canvas p-5 shadow-xl ring-1 shadow-crust/60 ring-surface-0 sm:rounded-2xl"
@@ -44,7 +49,7 @@
       <button
         aria-label={m.close()}
         class="-mt-1 -mr-2 rounded-md p-2 text-subtext hover:bg-surface-0/60 hover:text-text"
-        onclick={() => (open = false)}
+        onclick={onclose}
         type="button"
       >
         <X aria-hidden="true" class="size-5" />
