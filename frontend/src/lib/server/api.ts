@@ -1,4 +1,3 @@
-// The only place that talks to the API. Server-side only.
 import { env } from '$env/dynamic/private';
 import type { ErrorResponse } from '$lib/api/types';
 
@@ -17,13 +16,13 @@ export class ApiError extends Error {
 type Options = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   token?: string | null;
+  headers?: Record<string, string>;
   body?: unknown;
   fetch?: typeof fetch;
 };
 
-/** Calls the API and returns the parsed JSON, or throws ApiError with the API's error code. */
 export async function api<T>(path: string, opts: Options = {}): Promise<T> {
-  const headers: Record<string, string> = { accept: 'application/json' };
+  const headers: Record<string, string> = { accept: 'application/json', ...opts.headers };
   if (opts.token) headers.authorization = `Bearer ${opts.token}`;
   if (opts.body !== undefined) headers['content-type'] = 'application/json';
 
