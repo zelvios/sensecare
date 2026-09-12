@@ -10,9 +10,9 @@
 {#if rows.length === 0}
   <p class="rounded-xl bg-surface-0/40 px-4 py-6 text-center text-subtext">{m.history_empty()}</p>
 {:else}
-  <div class="overflow-x-auto rounded-2xl ring-1 ring-surface-0">
+  <div class="mt-4 rounded-2xl bg-canvas ring-1 ring-surface-0 max-sm:overflow-x-auto">
     <table class="w-full text-sm">
-      <thead class="bg-crust text-left text-subtext">
+      <thead class="sticky top-14 z-10 bg-crust text-left text-subtext">
         <tr>
           <th class="px-4 py-2 font-medium">{m.col_time()}</th>
           <th class="px-4 py-2 text-right font-medium">{m.temperature()}</th>
