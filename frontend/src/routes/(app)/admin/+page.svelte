@@ -3,8 +3,8 @@
   import * as m from '$lib/paraglide/messages';
 
   const sections = [
-    { href: resolve('/admin/rooms'), title: m.admin_rooms(), text: m.admin_rooms_text() }
-    // accounts, devices and audit are added as their pages land
+    { href: resolve('/admin/rooms'), title: m.admin_rooms(), text: m.admin_rooms_text() },
+    { href: resolve('/staff/calls'), title: m.calls(), text: m.admin_calls_text() }
   ];
 </script>
 
