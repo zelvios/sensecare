@@ -47,7 +47,7 @@
   <title>{m.title_overview()}</title>
 </svelte:head>
 
-<div class="flex min-h-0 flex-1 flex-col">
+<div class="flex h-[calc(100dvh-6.5rem)] min-h-0 flex-col">
   <div class="flex flex-wrap items-center justify-between gap-4">
     <h1 class="text-3xl font-semibold tracking-tight">{m.nav_overview()}</h1>
     <div class="flex items-center gap-2 text-sm text-subtext">
