@@ -8,7 +8,6 @@
 
   let { calls }: { calls: ServiceCall[] } = $props();
   let closing = $state<ServiceCall | null>(null);
-  let dialogOpen = $derived(closing !== null);
 
   const statusLabel: Record<ServiceCall['status'], () => string> = {
     open: m.status_open,
@@ -83,15 +82,7 @@
   {/if}
 </section>
 
-<Dialog
-  bind:open={
-    () => dialogOpen,
-    (v) => {
-      if (!v) closing = null;
-    }
-  }
-  title={m.confirm_close()}
->
+<Dialog open={closing !== null} onclose={() => (closing = null)} title={m.confirm_close()}>
   {#if closing}
     <form
       id="close-call-form"

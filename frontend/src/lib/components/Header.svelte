@@ -8,13 +8,13 @@
 
   let { user }: { user: AuthenticatedUser } = $props();
 
-  const isStaff = $derived(user.role !== 'client');
-
-  const links = $derived(
-    isStaff
-      ? [{ href: resolve('/staff'), label: m.nav_overview() }]
-      : [{ href: resolve('/me'), label: m.nav_my_room() }]
-  );
+  const links = $derived.by(() => {
+    if (user.role === 'client') return [{ href: resolve('/me'), label: m.nav_my_room() }];
+    const staff = [{ href: resolve('/staff'), label: m.nav_overview() }];
+    return user.role === 'admin'
+      ? [...staff, { href: resolve('/admin'), label: m.nav_admin() }]
+      : staff;
+  });
 
   const roleLabels = $derived<Record<AuthenticatedUser['role'], string>>({
     client: m.role_client(),
