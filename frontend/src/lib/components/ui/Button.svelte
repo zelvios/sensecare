@@ -2,7 +2,15 @@
   import type { Snippet } from 'svelte';
   import type { HTMLButtonAttributes } from 'svelte/elements';
 
-  type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'warn-soft' | 'danger-soft';
+  type Variant =
+    | 'primary'
+    | 'secondary'
+    | 'danger'
+    | 'ghost'
+    | 'accent-soft'
+    | 'ok-soft'
+    | 'warn-soft'
+    | 'danger-soft';
 
   let {
     variant = 'primary',
@@ -24,7 +32,11 @@
     'warn-soft':
       'bg-surface-0 text-text shadow-sm shadow-crust/50 ring-1 ring-surface-1 hover:bg-warn/10 hover:text-warn hover:ring-warn/40',
     'danger-soft':
-      'bg-surface-0 text-text shadow-sm shadow-crust/50 ring-1 ring-surface-1 hover:bg-danger/10 hover:text-danger hover:ring-danger/40'
+      'bg-surface-0 text-text shadow-sm shadow-crust/50 ring-1 ring-surface-1 hover:bg-danger/10 hover:text-danger hover:ring-danger/40',
+    'accent-soft':
+      'bg-surface-0 text-text shadow-sm shadow-crust/50 ring-1 ring-surface-1 hover:bg-accent/10 hover:text-accent hover:ring-accent/40',
+    'ok-soft':
+      'bg-surface-0 text-text shadow-sm shadow-crust/50 ring-1 ring-surface-1 hover:bg-ok/10 hover:text-ok hover:ring-ok/40'
   };
 </script>
 
