@@ -236,5 +236,12 @@
   "alarm_short_temperature_low": "Temp low",
   "alarm_short_temperature_high": "Temp high",
   "alarm_short_humidity_low": "Humidity low",
-  "alarm_short_humidity_high": "Humidity high"
+  "alarm_short_humidity_high": "Humidity high",
+  "check_in": "Check in",
+  "check_out": "Check out",
+  "room_inactive_no_checkin": "The room is deactivated. Activate it to check a client in.",
+  "stay_conflict": "The room is already occupied, or the client is checked in elsewhere.",
+  "checked_in_elsewhere": "Checked in to",
+  "manage_occupant": "Room occupant",
+  "change_occupant_help": "To change the occupant, check the current one out first."
 }
