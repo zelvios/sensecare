@@ -236,5 +236,12 @@
   "alarm_short_temperature_low": "Temp. lav",
   "alarm_short_temperature_high": "Temp. høj",
   "alarm_short_humidity_low": "Fugt lav",
-  "alarm_short_humidity_high": "Fugt høj"
+  "alarm_short_humidity_high": "Fugt høj",
+  "check_in": "Tjek ind",
+  "check_out": "Tjek ud",
+  "room_inactive_no_checkin": "Værelset er deaktiveret. Aktiver det for at tjekke en klient ind.",
+  "stay_conflict": "Værelset er allerede optaget, eller klienten er tjekket ind et andet sted.",
+  "checked_in_elsewhere": "Indtjekket på",
+  "manage_occupant": "Beboer i værelset",
+  "change_occupant_help": "Skift beboer ved først at tjekke den nuværende ud."
 }
