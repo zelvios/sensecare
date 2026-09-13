@@ -35,6 +35,11 @@
   let statusFilter = $state<Status | 'all'>('all');
   let pageSize = $state(10);
   let page = $state(1);
+  let showTiming = $state(false);
+
+  const latency = (c: ServiceCall) =>
+    c.pressed_at ? (Date.parse(c.created_at) - Date.parse(c.pressed_at)) / 1000 : null;
+  const fmtLatency = (s: number | null) => (s === null ? '' : `${s.toFixed(1)} s`);
 
   const filtered = $derived.by(() => {
     const q = query.trim().toLowerCase();
@@ -51,7 +56,8 @@
   });
   const filtering = $derived(query.trim() !== '' || statusFilter !== 'all');
 
-  type SortKey = 'room' | 'status' | 'created_at' | 'acknowledged_at' | 'closed_at';
+  type SortKey =
+    'room' | 'status' | 'pressed_at' | 'created_at' | 'latency' | 'acknowledged_at' | 'closed_at';
   let sortKey = $state<SortKey>('created_at');
   let sortDir = $state<'asc' | 'desc'>('desc');
 
@@ -64,6 +70,13 @@
     page = 1;
   }
 
+  $effect(() => {
+    if (!showTiming && (sortKey === 'pressed_at' || sortKey === 'latency')) {
+      sortKey = 'created_at';
+      sortDir = 'desc';
+    }
+  });
+
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
   const byTime =
     (get: (c: ServiceCall) => string | null | undefined) => (x: ServiceCall, y: ServiceCall) =>
@@ -73,7 +86,9 @@
     room: (x, y) => collator.compare(x.room_number, y.room_number),
     status: (x, y) =>
       statusRank[x.status] - statusRank[y.status] || byTime((c) => c.created_at)(y, x),
+    pressed_at: byTime((c) => c.pressed_at),
     created_at: byTime((c) => c.created_at),
+    latency: (x, y) => (latency(x) ?? -1) - (latency(y) ?? -1),
     acknowledged_at: byTime((c) => c.acknowledged_at),
     closed_at: byTime((c) => c.closed_at)
   };
@@ -199,6 +214,17 @@
     </select>
   </label>
 
+  <button
+    type="button"
+    onclick={() => (showTiming = !showTiming)}
+    aria-pressed={showTiming}
+    class="shrink-0 rounded-md border px-2.5 py-1 text-sm transition hover:text-text {showTiming
+      ? 'bg-accent/10 text-accent ring-1 ring-accent/40'
+      : 'bg-canvas text-subtext'}"
+  >
+    {m.device_timing()}
+  </button>
+
   <span class="ml-auto text-sm text-subtext num">
     {#if filtering}{filtered.length} /
     {/if}{data.calls.length}
@@ -220,7 +246,13 @@
         <tr>
           {@render sortHeader('room', m.room_heading())}
           {@render sortHeader('status', m.status())}
+          {#if showTiming}
+            {@render sortHeader('pressed_at', m.pressed_at())}
+          {/if}
           {@render sortHeader('created_at', m.created())}
+          {#if showTiming}
+            {@render sortHeader('latency', m.latency())}
+          {/if}
           {@render sortHeader('acknowledged_at', m.acknowledged_at())}
           {@render sortHeader('closed_at', m.closed())}
           <th class="px-4 py-2 font-medium">{m.note()}</th>
@@ -243,15 +275,26 @@
                 {statusLabel[c.status]()}
               </span>
             </td>
-            <td class="px-4 py-2 num">{fmtDateTimeSec(c.created_at)}</td>
+            {#if showTiming}
+              <td class="px-4 py-2 text-subtext num">
+                {c.pressed_at ? fmtDateTimeSec(c.pressed_at) : ''}
+              </td>
+            {/if}
+            <td class="px-4 py-2 whitespace-nowrap num">{fmtDateTimeSec(c.created_at)}</td>
+            {#if showTiming}
+              {@const s = latency(c)}
+              <td class="px-4 py-2 num {s !== null && s > 7 ? 'text-danger' : 'text-subtext'}">
+                {fmtLatency(s)}
+              </td>
+            {/if}
             <td class="px-4 py-2 num">
               {c.acknowledged_at ? fmtDateTimeSec(c.acknowledged_at) : ''}
             </td>
             <td class="px-4 py-2 num">{c.closed_at ? fmtDateTimeSec(c.closed_at) : ''}</td>
-            <td class="max-w-xs truncate px-4 py-2 text-subtext" title={c.note ?? ''}>
+            <td class="w-full max-w-0 truncate px-4 py-2 text-subtext" title={c.note ?? ''}>
               {c.note ?? ''}
             </td>
-            <td class="px-4 py-2">
+            <td class="px-4 py-2 whitespace-nowrap">
               <div class="flex justify-end gap-2">
                 {#if c.status === 'open'}
                   <form method="POST" action="?/acknowledge" use:enhance={a.track()}>
