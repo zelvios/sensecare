@@ -301,5 +301,16 @@
   "patient_edit": "Rediger patient",
   "checked_in": "Indtjekket",
   "not_checked_in_short": "Ikke indtjekket",
-  "check_in_help": "Vælg et ledigt værelse."
+  "check_in_help": "Vælg et ledigt værelse.",
+  "title_admin_audit": "Historik - SenseCare",
+  "admin_audit": "Historik",
+  "admin_audit_text": "Hele systemets ændringslog, nyeste først.",
+  "audit_actor_id": "Udført af (konto-id)",
+  "apply_filter": "Filtrér",
+  "audit_range": "Post",
+  "audit_newer": "Nyere",
+  "audit_older": "Ældre",
+  "audit_by_account": "Udført af:",
+  "audit_system": "system",
+  "account_id": "Konto-id"
 }

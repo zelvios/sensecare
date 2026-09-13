@@ -5,12 +5,18 @@ import type { AuditEntry, User } from '$lib/api/types';
 
 export const load: PageServerLoad = async ({ locals, params, fetch }) => {
   const token = locals.token;
-  const [account, about, by] = await Promise.all([
+  const [account, about, by, users] = await Promise.all([
     api<User>(`/users/${params.id}`, { token, fetch }),
     api<AuditEntry[]>(`/audit-log/user/${params.id}`, { token, fetch }),
-    api<AuditEntry[]>(`/audit-log?actor_id=${params.id}&limit=100`, { token, fetch })
+    api<AuditEntry[]>(`/audit-log?actor_id=${params.id}&limit=100`, { token, fetch }),
+    api<User[]>('/users?limit=200', { token, fetch })
   ]);
-  return { account, about, by };
+  return {
+    account,
+    about,
+    by,
+    actors: Object.fromEntries(users.map((u) => [u.id, u.display_name]))
+  };
 };
 
 export const actions: Actions = {

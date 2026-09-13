@@ -5,7 +5,13 @@
   import type { AuditEntry } from '$lib/api/types';
   import { resolve } from '$app/paths';
 
-  let { entries, empty }: { entries: AuditEntry[]; empty: string } = $props();
+  let {
+    entries,
+    empty,
+    actors = {}
+  }: { entries: AuditEntry[]; empty: string; actors?: Record<string, string> } = $props();
+
+  const actorName = (id: string) => actors[id] ?? id;
 
   const pageSizes = [5, 10, 15, 20, 30];
   let pageSize = $state(10);
@@ -249,6 +255,20 @@
                 {e.entity_id}
               </span>
             {/if}
+            <span class="text-xs text-subtext">
+              {m.audit_by()}
+              {#if e.actor_id}
+                <a
+                  href={resolve('/(app)/admin/accounts/[id]', { id: e.actor_id })}
+                  class="break-all num hover:text-accent"
+                  title={e.actor_id}
+                >
+                  {actorName(e.actor_id)}
+                </a>
+              {:else}
+                <span class="italic">{m.audit_system()}</span>
+              {/if}
+            </span>
             <span class="ml-auto text-xs text-subtext num">{fmtDateTimeSec(e.created_at)}</span>
           </div>
           {#if pairs.length > 0}
