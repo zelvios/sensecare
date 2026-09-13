@@ -175,7 +175,7 @@
 
 <div class="mt-4 rounded-2xl bg-canvas ring-1 ring-surface-0 max-sm:overflow-x-auto">
   <table class="w-full text-sm">
-    <thead class="sticky top-14 z-10 bg-crust text-left text-subtext">
+    <thead class="bg-crust text-left text-subtext sm:sticky sm:top-14 sm:z-10">
       <tr>
         {@render sortHeader('display_name', m.display_name())}
         {@render sortHeader('username', m.login_username())}

@@ -12,7 +12,7 @@
 {:else}
   <div class="mt-4 rounded-2xl bg-canvas ring-1 ring-surface-0 max-sm:overflow-x-auto">
     <table class="w-full text-sm">
-      <thead class="sticky top-14 z-10 bg-crust text-left text-subtext">
+      <thead class="bg-crust text-left text-subtext sm:sticky sm:top-14 sm:z-10">
         <tr>
           <th class="px-4 py-2 font-medium">{m.col_time()}</th>
           <th class="px-4 py-2 text-right font-medium">{m.temperature()}</th>
