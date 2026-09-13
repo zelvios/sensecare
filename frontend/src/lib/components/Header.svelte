@@ -12,6 +12,7 @@
     if (user.role === 'client') return [{ href: resolve('/me'), label: m.nav_my_room() }];
     const staff = [
       { href: resolve('/staff'), label: m.nav_overview() },
+      { href: resolve('/staff/patients'), label: m.nav_patients() },
       { href: resolve('/staff/calls'), label: m.nav_calls() },
       { href: resolve('/staff/alarms'), label: m.nav_alarms() }
     ];

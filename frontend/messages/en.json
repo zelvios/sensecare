@@ -290,5 +290,16 @@
   "audit_device_activated": "Device activated",
   "audit_device_deleted": "Device deleted",
   "audit_threshold_updated": "Limits changed",
-  "audit_threshold_removed": "Custom limits removed"
+  "audit_threshold_removed": "Custom limits removed",
+  "nav_patients": "Patients",
+  "title_patients": "Patients - SenseCare",
+  "patients": "Patients",
+  "patients_none": "No patients created.",
+  "patients_checked_in_of_total": "Checked-in patients of total",
+  "search_patients": "Search name, username or room",
+  "patient_create": "New patient",
+  "patient_edit": "Edit patient",
+  "checked_in": "Checked in",
+  "not_checked_in_short": "Not checked in",
+  "check_in_help": "Choose an available room."
 }
