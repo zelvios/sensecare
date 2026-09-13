@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Search } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
-  import type { Room } from '$lib/api/types';
+  import type { Room } from '$lib/api/types.ts';
 
   let { rooms, name = 'room_id' }: { rooms: Room[]; name?: string } = $props();
 

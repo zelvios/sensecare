@@ -3,6 +3,7 @@
   import * as m from '$lib/paraglide/messages';
   import { fmtDateTimeSec } from '$lib/utils/format';
   import type { AuditEntry } from '$lib/api/types';
+  import { resolve } from '$app/paths';
 
   let { entries, empty }: { entries: AuditEntry[]; empty: string } = $props();
 
@@ -67,9 +68,42 @@
     'service_call.closed': m.audit_call_closed,
     'service_call.updated': m.audit_call_updated,
     'alarm.acknowledged': m.audit_alarm_acknowledged,
-    'alarm.resolved': m.audit_alarm_resolved
+    'alarm.resolved': m.audit_alarm_resolved,
+    'device.registered': m.audit_device_registered,
+    'device.updated': m.audit_device_updated,
+    'device.assigned': m.audit_device_assigned,
+    'device.key_rotated': m.audit_device_key_rotated,
+    'device.deactivated': m.audit_device_deactivated,
+    'device.activated': m.audit_device_activated,
+    'device.deleted': m.audit_device_deleted,
+    'threshold.updated': m.audit_threshold_updated,
+    'threshold.removed': m.audit_threshold_removed
   };
   const label = (action: string) => labels[action]?.() ?? action;
+
+  /** Where to look at the record an entry is about. Null when there is no page for it. */
+  function entityHref(e: AuditEntry): string | null {
+    switch (e.entity_type) {
+      case 'user':
+        return resolve('/(app)/admin/accounts/[id]', { id: e.entity_id });
+      case 'room':
+        return `${resolve('/admin/rooms')}?q=${e.entity_id.slice(0, 8)}`;
+      case 'device':
+        return `${resolve('/admin/devices')}?q=${e.entity_id.slice(0, 8)}`;
+      default:
+        return null;
+    }
+  }
+
+  const entityLabel: Record<string, () => string> = {
+    user: m.audit_group_account,
+    room: m.audit_group_room,
+    device: m.audit_group_device,
+    threshold: m.audit_group_threshold,
+    stay: m.audit_group_stay,
+    service_call: m.audit_group_call,
+    alarm: m.audit_group_alarm
+  };
 
   const groups = $derived([...new Set(entries.map((e) => groupOf(e.action)))]);
 
@@ -99,14 +133,26 @@
   const start = $derived((page - 1) * pageSize);
   const visible = $derived(filtered.slice(start, start + pageSize));
 
-  function detailPairs(details: unknown): { key: string; value: string }[] {
+  /** Link for an id valued detail. room_id, user_id and device_id have pages, others do not. */
+  function hrefForDetail(key: string, value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    if (key === 'room_id') return `${resolve('/admin/rooms')}?q=${value.slice(0, 8)}`;
+    if (key === 'user_id' || key === 'actor_id' || key === 'acknowledged_by' || key === 'closed_by')
+      return resolve('/(app)/admin/accounts/[id]', { id: value });
+    if (key === 'device_id') return `${resolve('/admin/devices')}?q=${value.slice(0, 8)}`;
+    return null;
+  }
+
+  type Pair = { key: string; value: string; href: string | null };
+
+  function detailPairs(details: unknown): Pair[] {
     if (!details || typeof details !== 'object') return [];
     return Object.entries(details as Record<string, unknown>).map(([key, v]) => {
       if (v && typeof v === 'object' && 'from' in v && 'to' in v) {
         const c = v as { from: unknown; to: unknown };
-        return { key, value: `${fmt(c.from)} -> ${fmt(c.to)}` };
+        return { key, value: `${fmt(c.from)} -> ${fmt(c.to)}`, href: null };
       }
-      return { key, value: fmt(v) };
+      return { key, value: fmt(v), href: hrefForDetail(key, v) };
     });
   }
   const fmt = (v: unknown) =>
@@ -191,6 +237,18 @@
               {groupLabel[g]()}
             </span>
             <span class="font-medium">{label(e.action)}</span>
+            {#if entityHref(e)}
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+              <a href={entityHref(e)} class="text-xs break-all text-subtext num hover:text-accent">
+                {entityLabel[e.entity_type]?.() ?? e.entity_type}
+                {e.entity_id}
+              </a>
+            {:else}
+              <span class="text-xs break-all text-subtext num">
+                {entityLabel[e.entity_type]?.() ?? e.entity_type}
+                {e.entity_id}
+              </span>
+            {/if}
             <span class="ml-auto text-xs text-subtext num">{fmtDateTimeSec(e.created_at)}</span>
           </div>
           {#if pairs.length > 0}
@@ -198,7 +256,14 @@
               {#each pairs as p (p.key)}
                 <div class="flex gap-1">
                   <dt class="font-medium">{p.key}</dt>
-                  <dd class="break-all">{p.value}</dd>
+                  <dd class="break-all">
+                    {#if p.href}
+                      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+                      <a href={p.href} class="hover:text-accent hover:underline">{p.value}</a>
+                    {:else}
+                      {p.value}
+                    {/if}
+                  </dd>
                 </div>
               {/each}
             </dl>
