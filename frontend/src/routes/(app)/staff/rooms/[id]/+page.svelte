@@ -1,24 +1,40 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { ArrowLeft, User, Wifi, WifiOff } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
   import { fmtDateTime, fmtHumidity, fmtTemp } from '$lib/utils/format';
+  import { actionState } from '$lib/utils/forms.svelte';
+  import Button from '$lib/components/ui/Button.svelte';
+  import Dialog from '$lib/components/ui/Dialog.svelte';
   import ReadingCard from '$lib/components/rooms/ReadingCard.svelte';
   import PeriodPicker from '$lib/components/rooms/PeriodPicker.svelte';
   import HistoryTable from '$lib/components/rooms/HistoryTable.svelte';
+  import ClientPicker from '$lib/components/rooms/ClientPicker.svelte';
   import CallList from './CallList.svelte';
   import AlarmList from './AlarmList.svelte';
 
   let { data } = $props();
+  const a = actionState();
+  let managingStay = $state(false);
 
   const r = $derived(data.room);
   const floor = $derived(r.room.floor ?? null);
+  const heading = $derived(
+    floor !== null ? `${m.floor()} ${floor}, ${r.room.room_number}` : r.room.room_number
+  );
   const offline = $derived(
     !r.device ||
       !r.device.last_seen_at ||
       Date.now() - Date.parse(r.device.last_seen_at) > 2 * 60_000
   );
+
+  const errorText = $derived.by(() => {
+    if (!a.error) return null;
+    if (a.error === 'conflict') return m.stay_conflict();
+    return m.action_failed();
+  });
 
   $effect(() => {
     const id = setInterval(() => {
@@ -32,7 +48,7 @@
   <title>{m.room_heading()} {r.room.room_number} - SenseCare</title>
 </svelte:head>
 
-<div class="min-h-0 flex-1 overflow-y-auto p-1">
+<div>
   <a
     class="inline-flex items-center gap-1 text-sm text-subtext hover:text-text"
     href={resolve('/staff')}
@@ -43,10 +59,7 @@
 
   <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-semibold tracking-tight num">
-        {#if floor !== null}{m.floor()} {floor},
-        {/if}{r.room.room_number}
-      </h1>
+      <h1 class="text-3xl font-semibold tracking-tight num">{heading}</h1>
       {#if r.room.name}
         <p class="mt-1 text-subtext">{r.room.name}</p>
       {/if}
@@ -56,7 +69,15 @@
       <div class="flex items-center gap-1.5">
         <User aria-hidden="true" class="size-4 text-subtext" />
         <dt class="sr-only">{m.occupant()}</dt>
-        <dd>{r.occupant ? r.occupant.display_name : m.room_empty()}</dd>
+        <dd>
+          <button
+            type="button"
+            onclick={() => a.open(() => (managingStay = true))}
+            class="rounded underline-offset-2 hover:text-accent hover:underline"
+          >
+            {data.stay ? data.stay.user_display_name : m.room_empty()}
+          </button>
+        </dd>
       </div>
       <div class="flex items-center gap-1.5">
         {#if offline}
@@ -128,3 +149,45 @@
     <HistoryTable rows={data.history} />
   </div>
 </div>
+
+<Dialog
+  open={managingStay}
+  onclose={() => a.close(() => (managingStay = false))}
+  title={m.manage_occupant()}
+>
+  {#if data.stay}
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="truncate font-medium">{data.stay.user_display_name}</p>
+        <p class="text-xs text-subtext num">
+          {m.checked_in_at()}
+          {fmtDateTime(data.stay.checked_in_at)}
+        </p>
+      </div>
+      <form method="POST" action="?/checkOut" use:enhance={a.track()}>
+        <input type="hidden" name="stay_id" value={data.stay.id} />
+        <Button type="submit" variant="warn-soft" class="px-3 py-1 text-xs">{m.check_out()}</Button>
+      </form>
+    </div>
+    <p class="mt-3 text-xs text-subtext">{m.change_occupant_help()}</p>
+  {:else if !r.room.is_active}
+    <p class="text-subtext">{m.room_inactive_no_checkin()}</p>
+  {:else}
+    <form id="stay-checkin" method="POST" action="?/checkIn" use:enhance={a.track()}>
+      <ClientPicker clients={data.clients} occupiedIn={data.occupiedIn} />
+    </form>
+  {/if}
+  {#if errorText}
+    <p class="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
+      {errorText}
+    </p>
+  {/if}
+  {#snippet footer()}
+    <Button variant="secondary" onclick={() => a.close(() => (managingStay = false))}>
+      {m.close()}
+    </Button>
+    {#if !data.stay && r.room.is_active}
+      <Button type="submit" variant="ok-soft" form="stay-checkin">{m.check_in()}</Button>
+    {/if}
+  {/snippet}
+</Dialog>

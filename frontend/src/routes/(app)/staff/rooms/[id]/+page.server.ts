@@ -2,13 +2,15 @@ import { error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { api, ApiError } from '$lib/server/api';
 import { act } from '$lib/server/actions';
-import {
-  type Measurement,
-  PERIOD_HOURS,
-  type PeriodHours,
-  type RoomOverview,
-  type ServiceCall,
-  type Threshold
+import { PERIOD_HOURS } from '$lib/api/types';
+import type {
+  Measurement,
+  PeriodHours,
+  RoomOverview,
+  ServiceCall,
+  Stay,
+  Threshold,
+  User
 } from '$lib/api/types';
 
 async function orNull<T>(p: Promise<T>): Promise<T | null> {
@@ -30,7 +32,7 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
   const to = new Date();
   const from = new Date(to.getTime() - hours * 3600 * 1000);
 
-  const [overview, latest, thresholds, history, calls] = await Promise.all([
+  const [overview, latest, thresholds, history, calls, stays, clients] = await Promise.all([
     api<RoomOverview[]>('/rooms/overview?include_inactive=true', { token, fetch }),
     orNull(api<Measurement>(`/rooms/${params.id}/measurements/latest`, { token, fetch })),
     orNull(api<Threshold>(`/rooms/${params.id}/thresholds`, { token, fetch })),
@@ -38,7 +40,9 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
       `/rooms/${params.id}/measurements?from=${from.toISOString()}&to=${to.toISOString()}&limit=500`,
       { token, fetch }
     ),
-    api<ServiceCall[]>(`/service-calls?room_id=${params.id}&limit=50`, { token, fetch })
+    api<ServiceCall[]>(`/service-calls?room_id=${params.id}&limit=50`, { token, fetch }),
+    api<Stay[]>('/stays?open=true&limit=200', { token, fetch }),
+    api<User[]>('/users?role=client&active=true&limit=200', { token, fetch })
   ]);
 
   const room = overview.find((r) => r.room.id === params.id);
@@ -51,6 +55,9 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
     history,
     hours,
     calls,
+    stay: stays.find((s) => s.room_id === params.id) ?? null,
+    clients,
+    occupiedIn: Object.fromEntries(stays.map((s) => [s.user_id, s.room_number])),
     canManage: locals.user?.role === 'admin'
   };
 };
@@ -84,5 +91,22 @@ export const actions: Actions = {
   resolveAlarm: async ({ request, locals, fetch }) => {
     const id = String((await request.formData()).get('id'));
     return act(() => api(`/alarms/${id}/resolve`, { method: 'POST', token: locals.token, fetch }));
+  },
+  checkIn: async ({ request, locals, params, fetch }) => {
+    const user_id = String((await request.formData()).get('user_id'));
+    return act(() =>
+      api('/stays', {
+        method: 'POST',
+        body: { room_id: params.id, user_id },
+        token: locals.token,
+        fetch
+      })
+    );
+  },
+  checkOut: async ({ request, locals, fetch }) => {
+    const stayId = String((await request.formData()).get('stay_id'));
+    return act(() =>
+      api(`/stays/${stayId}/check-out`, { method: 'POST', token: locals.token, fetch })
+    );
   }
 };
