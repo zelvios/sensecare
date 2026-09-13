@@ -205,5 +205,8 @@
   "temperature_max": "Temperature max",
   "humidity_min": "Humidity min",
   "humidity_max": "Humidity max",
-  "search_room_picker": "Search id, number, name or floor"
+  "search_room_picker": "Search id, number, name or floor",
+  "device_timing": "Device timing",
+  "pressed_at": "Pressed",
+  "latency": "Latency"
 }

@@ -205,5 +205,8 @@
   "temperature_max": "Temperatur maks.",
   "humidity_min": "Luftfugtighed min.",
   "humidity_max": "Luftfugtighed maks.",
-  "search_room_picker": "Søg id, nummer, navn eller etage"
+  "search_room_picker": "Søg id, nummer, navn eller etage",
+  "device_timing": "Enhedstider",
+  "pressed_at": "Trykket",
+  "latency": "Forsinkelse"
 }
