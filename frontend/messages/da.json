@@ -61,7 +61,7 @@
   "clear": "Ryd",
   "all": "Alle",
   "all_floors": "Alle etager",
-  "occupant": "Beboer",
+  "occupant": "Patient",
   "device": "Enhed",
   "device_none": "Ingen enhed",
   "device_online": "Enhed online",
@@ -242,6 +242,11 @@
   "room_inactive_no_checkin": "Værelset er deaktiveret. Aktiver det for at tjekke en klient ind.",
   "stay_conflict": "Værelset er allerede optaget, eller klienten er tjekket ind et andet sted.",
   "checked_in_elsewhere": "Indtjekket på",
-  "manage_occupant": "Beboer i værelset",
-  "change_occupant_help": "Skift beboer ved først at tjekke den nuværende ud."
+  "manage_occupant": "Patient i værelset",
+  "change_occupant_help": "Skift patient ved først at tjekke den nuværende ud.",
+  "alarms_open_of_total": "Åbne alarmer af i alt",
+  "open_lower": "åbne",
+  "room_info": "Værelset",
+  "manage": "Administrer",
+  "last_seen": "Sidst set"
 }

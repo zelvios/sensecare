@@ -4,6 +4,7 @@ import { api, ApiError } from '$lib/server/api';
 import { act } from '$lib/server/actions';
 import { PERIOD_HOURS } from '$lib/api/types';
 import type {
+  Alarm,
   Measurement,
   PeriodHours,
   RoomOverview,
@@ -32,7 +33,7 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
   const to = new Date();
   const from = new Date(to.getTime() - hours * 3600 * 1000);
 
-  const [overview, latest, thresholds, history, calls, stays, clients] = await Promise.all([
+  const [overview, latest, thresholds, history, calls, alarms, stays, clients] = await Promise.all([
     api<RoomOverview[]>('/rooms/overview?include_inactive=true', { token, fetch }),
     orNull(api<Measurement>(`/rooms/${params.id}/measurements/latest`, { token, fetch })),
     orNull(api<Threshold>(`/rooms/${params.id}/thresholds`, { token, fetch })),
@@ -41,6 +42,7 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
       { token, fetch }
     ),
     api<ServiceCall[]>(`/service-calls?room_id=${params.id}&limit=50`, { token, fetch }),
+    api<Alarm[]>(`/alarms?room_id=${params.id}&limit=50`, { token, fetch }),
     api<Stay[]>('/stays?open=true&limit=200', { token, fetch }),
     api<User[]>('/users?role=client&active=true&limit=200', { token, fetch })
   ]);
@@ -55,6 +57,7 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
     history,
     hours,
     calls,
+    alarms,
     stay: stays.find((s) => s.room_id === params.id) ?? null,
     clients,
     occupiedIn: Object.fromEntries(stays.map((s) => [s.user_id, s.room_number])),
