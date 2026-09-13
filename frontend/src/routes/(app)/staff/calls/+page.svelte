@@ -2,7 +2,7 @@
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { ChevronLeft, ChevronRight, Search, X } from '@lucide/svelte';
+  import { ChevronLeft, ChevronRight, RefreshCw, Search, X } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
   import Button from '$lib/components/ui/Button.svelte';
   import Dialog from '$lib/components/ui/Dialog.svelte';
@@ -13,6 +13,16 @@
 
   let { data } = $props();
   const a = actionState();
+  let refreshing = $state(false);
+
+  async function refresh() {
+    refreshing = true;
+    try {
+      await invalidateAll();
+    } finally {
+      refreshing = false;
+    }
+  }
 
   type Status = ServiceCall['status'];
   let simulating = $state(false);
@@ -75,6 +85,13 @@
       sortKey = 'created_at';
       sortDir = 'desc';
     }
+  });
+
+  $effect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh();
+    }, 15_000);
+    return () => clearInterval(id);
   });
 
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
@@ -153,9 +170,23 @@
 
 <div class="flex flex-wrap items-center justify-between gap-4">
   <h1 class="text-3xl font-semibold tracking-tight">{m.calls()}</h1>
-  {#if data.user.role === 'admin'}
-    <Button onclick={() => a.open(() => (simulating = true))}>{m.call_simulate()}</Button>
-  {/if}
+  <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 text-sm text-subtext">
+      <span class="num">{m.updated_at()} {fmtDateTimeSec(data.loadedAt)}</span>
+      <button
+        aria-label={m.refresh()}
+        class="rounded-md p-1.5 transition hover:bg-surface-0/60 hover:text-text disabled:opacity-60"
+        disabled={refreshing}
+        onclick={refresh}
+        type="button"
+      >
+        <RefreshCw aria-hidden="true" class="size-4 {refreshing ? 'animate-spin' : ''}" />
+      </button>
+    </div>
+    {#if data.user.role === 'admin'}
+      <Button onclick={() => a.open(() => (simulating = true))}>{m.call_simulate()}</Button>
+    {/if}
+  </div>
 </div>
 
 <div class="mt-6 flex flex-wrap items-center gap-2">
