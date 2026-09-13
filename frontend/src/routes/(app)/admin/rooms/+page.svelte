@@ -144,7 +144,11 @@
     <tbody class="divide-y">
       {#each sorted as r (r.id)}
         <tr class={r.is_active ? '' : 'text-subtext'}>
-          <td class="px-4 py-2 font-medium num">{r.room_number}</td>
+          <td class="px-4 py-2 font-medium num">
+            <a href={resolve('/(app)/staff/rooms/[id]', { id: r.id })} class="hover:text-accent">
+              {r.room_number}
+            </a>
+          </td>
           <td class="px-4 py-2">{r.name ?? ''}</td>
           <td class="px-4 py-2 num">{floorLabel(r)}</td>
           <td class="px-4 py-2">
