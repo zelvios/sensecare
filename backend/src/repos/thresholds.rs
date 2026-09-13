@@ -54,3 +54,13 @@ pub async fn delete(conn: &mut DbConn, id: Uuid) -> QueryResult<()> {
         .await
         .map(|_| ())
 }
+
+/// Every room override, i.e. rows with a room_id. The global default is not included.
+pub async fn list_overrides(conn: &mut DbConn) -> QueryResult<Vec<ClimateThreshold>> {
+    climate_thresholds::table
+        .filter(climate_thresholds::room_id.is_not_null())
+        .order(climate_thresholds::updated_at.desc())
+        .select(ClimateThreshold::as_select())
+        .load(conn)
+        .await
+}
