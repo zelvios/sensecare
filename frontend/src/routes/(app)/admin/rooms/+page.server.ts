@@ -1,20 +1,20 @@
 import type { Actions, PageServerLoad } from './$types';
 import { api } from '$lib/server/api';
 import { act } from '$lib/server/actions';
-import type { Room } from '$lib/api/types';
+import type { Room, Stay, User } from '$lib/api/types';
 
 export const load: PageServerLoad = async ({ locals, fetch }) => {
-  const rooms = await api<Room[]>('/rooms?limit=200', { token: locals.token, fetch });
-  rooms.sort((a, b) => {
-    const fa = a.floor ?? Number.POSITIVE_INFINITY;
-    const fb = b.floor ?? Number.POSITIVE_INFINITY;
-    if (fa !== fb) return fa - fb;
-    return a.room_number.localeCompare(b.room_number, undefined, { numeric: true });
-  });
-  return { rooms };
+  const token = locals.token;
+  const [rooms, stays, clients] = await Promise.all([
+    api<Room[]>('/rooms?limit=200', { token, fetch }),
+    api<Stay[]>('/stays?open=true&limit=200', { token, fetch }),
+    api<User[]>('/users?role=client&active=true&limit=200', { token, fetch })
+  ]);
+  const staysByRoom = Object.fromEntries(stays.map((s) => [s.room_id, s]));
+  const occupiedIn = Object.fromEntries(stays.map((s) => [s.user_id, s.room_number]));
+  return { rooms, staysByRoom, clients, occupiedIn };
 };
 
-/** Reads the room fields from a form. Empty name and floor become null. */
 function roomBody(form: FormData) {
   const name = String(form.get('name') ?? '').trim();
   const floorRaw = String(form.get('floor') ?? '').trim();
@@ -49,5 +49,16 @@ export const actions: Actions = {
   delete: async ({ request, locals, fetch }) => {
     const id = String((await request.formData()).get('id'));
     return act(() => api(`/rooms/${id}`, { method: 'DELETE', token: locals.token, fetch }));
+  },
+  checkIn: async ({ request, locals, fetch }) => {
+    const form = await request.formData();
+    const body = { room_id: String(form.get('room_id')), user_id: String(form.get('user_id')) };
+    return act(() => api('/stays', { method: 'POST', body, token: locals.token, fetch }));
+  },
+  checkOut: async ({ request, locals, fetch }) => {
+    const stayId = String((await request.formData()).get('stay_id'));
+    return act(() =>
+      api(`/stays/${stayId}/check-out`, { method: 'POST', token: locals.token, fetch })
+    );
   }
 };

@@ -7,8 +7,10 @@
   import Dialog from '$lib/components/ui/Dialog.svelte';
   import RoomFilterBar from '$lib/components/rooms/RoomFilterBar.svelte';
   import { filterRooms, type FloorFilter, floorsOf } from '$lib/utils/rooms';
+  import { fmtDateTime } from '$lib/utils/format';
   import { actionState } from '$lib/utils/forms.svelte';
   import RoomForm from './RoomForm.svelte';
+  import ClientPicker from '$lib/components/rooms/ClientPicker.svelte';
   import type { Room } from '$lib/api/types';
 
   let { data } = $props();
@@ -17,6 +19,7 @@
   let editing = $state<Room | null>(null);
   let deleting = $state<Room | null>(null);
   const dialogOpen = $derived(creating || editing !== null || deleting !== null);
+  const stayOf = (r: Room) => data.staysByRoom[r.id] ?? null;
 
   let query = $state('');
   let floor = $state<FloorFilter>('all');
@@ -26,7 +29,7 @@
   const filtering = $derived(query.trim() !== '' || floor !== 'all');
   const activeCount = $derived(data.rooms.filter((r) => r.is_active).length);
 
-  type SortKey = 'room_number' | 'name' | 'floor' | 'status';
+  type SortKey = 'room_number' | 'name' | 'floor' | 'occupant' | 'status';
   let sortKey = $state<SortKey>('floor');
   let sortDir = $state<'asc' | 'desc'>('asc');
 
@@ -46,6 +49,8 @@
     floor: (a, b) =>
       (a.floor ?? Number.POSITIVE_INFINITY) - (b.floor ?? Number.POSITIVE_INFINITY) ||
       collator.compare(a.room_number, b.room_number),
+    occupant: (a, b) =>
+      collator.compare(stayOf(a)?.user_display_name ?? '', stayOf(b)?.user_display_name ?? ''),
     status: (a, b) =>
       Number(b.is_active) - Number(a.is_active) || collator.compare(a.room_number, b.room_number)
   };
@@ -61,6 +66,7 @@
     if (!a.error) return null;
     if (a.error === 'already_exists') return m.room_number_taken();
     if (a.error === 'invalid_reference') return m.room_in_use();
+    if (a.error === 'conflict') return m.stay_conflict();
     if (a.error === 'bad_request') return m.room_invalid();
     return m.action_failed();
   });
@@ -137,20 +143,34 @@
         {@render sortHeader('room_number', m.room_number())}
         {@render sortHeader('name', m.room_name())}
         {@render sortHeader('floor', m.floor())}
+        {@render sortHeader('occupant', m.occupant())}
         {@render sortHeader('status', m.status())}
         <th class="px-4 py-2"></th>
       </tr>
     </thead>
     <tbody class="divide-y">
       {#each sorted as r (r.id)}
+        {@const stay = stayOf(r)}
         <tr class={r.is_active ? '' : 'text-subtext'}>
           <td class="px-4 py-2 font-medium num">
             <a href={resolve('/(app)/staff/rooms/[id]', { id: r.id })} class="hover:text-accent">
               {r.room_number}
             </a>
           </td>
-          <td class="px-4 py-2">{r.name ?? ''}</td>
-          <td class="px-4 py-2 num">{floorLabel(r)}</td>
+          <td class="w-full max-w-0 truncate px-4 py-2" title={r.name ?? ''}>{r.name ?? ''}</td>
+          <td class="px-4 py-2 whitespace-nowrap num">{floorLabel(r)}</td>
+          <td class="px-4 py-2 whitespace-nowrap">
+            {#if stay}
+              <a
+                href={resolve('/(app)/admin/accounts/[id]', { id: stay.user_id })}
+                class="hover:text-accent"
+              >
+                {stay.user_display_name}
+              </a>
+            {:else}
+              <span class="text-subtext">{m.room_empty()}</span>
+            {/if}
+          </td>
           <td class="px-4 py-2">
             <span
               class="rounded-full px-2 py-0.5 text-xs font-medium {r.is_active
@@ -160,7 +180,7 @@
               {r.is_active ? m.active() : m.inactive()}
             </span>
           </td>
-          <td class="px-4 py-2">
+          <td class="px-4 py-2 whitespace-nowrap">
             <div class="flex justify-end gap-2">
               <Button
                 variant="accent-soft"
@@ -227,6 +247,7 @@
   title={m.room_edit()}
 >
   {#if editing}
+    {@const stay = stayOf(editing)}
     <form
       id="room-edit"
       method="POST"
@@ -235,6 +256,45 @@
     >
       <RoomForm room={editing} />
     </form>
+
+    <div class="mt-5 border-t pt-4">
+      <h3 class="text-sm font-semibold">{m.occupant()}</h3>
+      {#if stay}
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="truncate font-medium">{stay.user_display_name}</p>
+            <p class="text-xs text-subtext num">
+              {m.checked_in_at()}
+              {fmtDateTime(stay.checked_in_at)}
+            </p>
+          </div>
+          <form method="POST" action="?/checkOut" use:enhance={a.track()}>
+            <input type="hidden" name="stay_id" value={stay.id} />
+            <Button type="submit" variant="warn-soft" class="px-3 py-1 text-xs">
+              {m.check_out()}
+            </Button>
+          </form>
+        </div>
+      {:else if !editing.is_active}
+        <p class="mt-2 text-sm text-subtext">{m.room_inactive_no_checkin()}</p>
+      {:else}
+        <form
+          id="room-checkin"
+          method="POST"
+          action="?/checkIn"
+          use:enhance={a.track()}
+          class="mt-2"
+        >
+          <input type="hidden" name="room_id" value={editing.id} />
+          <ClientPicker clients={data.clients} occupiedIn={data.occupiedIn} />
+          <div class="mt-2 flex justify-end">
+            <Button type="submit" variant="ok-soft" class="px-3 py-1 text-xs">
+              {m.check_in()}
+            </Button>
+          </div>
+        </form>
+      {/if}
+    </div>
   {/if}
   {@render errorLine()}
   {#snippet footer()}
