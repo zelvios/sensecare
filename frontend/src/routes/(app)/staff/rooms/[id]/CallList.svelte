@@ -9,6 +9,7 @@
 
   let { calls }: { calls: ServiceCall[] } = $props();
   let closing = $state<ServiceCall | null>(null);
+  const openCount = $derived(calls.filter((c) => c.status !== 'closed').length);
 
   type Status = ServiceCall['status'];
 
@@ -54,6 +55,12 @@
 <section aria-labelledby="calls-heading">
   <div class="flex items-center gap-3">
     <h2 class="text-lg font-semibold" id="calls-heading">{m.calls()}</h2>
+    {#if openCount > 0}
+      <span class="rounded-full bg-danger/10 px-2 py-0.5 text-xs font-medium text-danger">
+        {openCount}
+        {m.open_lower()}
+      </span>
+    {/if}
     <span aria-hidden="true" class="h-px flex-1 bg-surface-0"></span>
     <span class="text-sm text-subtext num">
       {#if filtering}{filtered.length} /
@@ -64,8 +71,8 @@
   {#if calls.length === 0}
     <p class="mt-3 text-sm text-subtext">{m.calls_none()}</p>
   {:else}
-    <div class="mt-3 flex flex-wrap items-center gap-2">
-      <label class="relative min-w-0 flex-1 sm:w-56 sm:flex-none">
+    <div class="mt-3 space-y-2">
+      <label class="relative block">
         <Search
           aria-hidden="true"
           class="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-overlay"
@@ -92,33 +99,34 @@
           </button>
         {/if}
       </label>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="shrink-0">
+          <span class="sr-only">{m.status()}</span>
+          <select
+            bind:value={status}
+            onchange={() => (page = 1)}
+            class="rounded-md border bg-canvas py-1 pr-7 pl-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
+          >
+            <option value="all">{m.all()}</option>
+            <option value="open">{m.status_open()}</option>
+            <option value="in_progress">{m.status_in_progress()}</option>
+            <option value="closed">{m.status_closed()}</option>
+          </select>
+        </label>
 
-      <label class="shrink-0">
-        <span class="sr-only">{m.status()}</span>
-        <select
-          bind:value={status}
-          onchange={() => (page = 1)}
-          class="rounded-md border bg-canvas py-1 pr-7 pl-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
-        >
-          <option value="all">{m.all()}</option>
-          <option value="open">{m.status_open()}</option>
-          <option value="in_progress">{m.status_in_progress()}</option>
-          <option value="closed">{m.status_closed()}</option>
-        </select>
-      </label>
-
-      <label class="shrink-0">
-        <span class="sr-only">{m.per_page()}</span>
-        <select
-          bind:value={pageSize}
-          onchange={() => (page = 1)}
-          class="rounded-md border bg-canvas py-1 pr-7 pl-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
-        >
-          {#each pageSizes as n (n)}
-            <option value={n}>{n} {m.per_page_suffix()}</option>
-          {/each}
-        </select>
-      </label>
+        <label class="shrink-0">
+          <span class="sr-only">{m.per_page()}</span>
+          <select
+            bind:value={pageSize}
+            onchange={() => (page = 1)}
+            class="rounded-md border bg-canvas py-1 pr-7 pl-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
+          >
+            {#each pageSizes as n (n)}
+              <option value={n}>{n} {m.per_page_suffix()}</option>
+            {/each}
+          </select>
+        </label>
+      </div>
     </div>
 
     {#if filtered.length === 0}
@@ -127,12 +135,17 @@
       <ul class="mt-3 divide-y rounded-2xl bg-canvas ring-1 ring-surface-0">
         {#each visible as c (c.id)}
           <li class="px-4 py-3">
-            <div class="flex flex-wrap items-center gap-3">
-              <span class="rounded-full px-2.5 py-0.5 text-sm font-medium {statusTone[c.status]}">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="rounded-full px-2 py-0.5 text-xs font-medium {statusTone[c.status]}">
                 {statusLabel[c.status]()}
               </span>
+              {#if c.note}
+                <span class="min-w-0 truncate text-sm text-subtext" title={c.note}>{c.note}</span>
+              {/if}
+            </div>
 
-              <dl class="flex min-w-0 flex-1 flex-wrap gap-x-4 gap-y-0.5 text-xs text-subtext num">
+            <div class="mt-1.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <dl class="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-subtext num">
                 <div class="flex gap-1">
                   <dt class="font-medium">{m.created()}</dt>
                   <dd>{fmtDateTimeSec(c.created_at)}</dd>
@@ -151,28 +164,26 @@
                 {/if}
               </dl>
 
-              {#if c.status === 'open'}
-                <form method="POST" action="?/acknowledgeCall" use:enhance>
-                  <input type="hidden" name="id" value={c.id} />
-                  <Button type="submit" variant="warn-soft" class="px-3 py-1 text-sm">
-                    {m.acknowledge()}
-                  </Button>
-                </form>
-              {/if}
               {#if c.status !== 'closed'}
-                <Button
-                  variant="danger-soft"
-                  class="px-3 py-1 text-sm"
-                  onclick={() => (closing = c)}
-                >
-                  {m.close_call()}
-                </Button>
+                <div class="flex shrink-0 gap-2">
+                  {#if c.status === 'open'}
+                    <form method="POST" action="?/acknowledgeCall" use:enhance>
+                      <input type="hidden" name="id" value={c.id} />
+                      <Button type="submit" variant="warn-soft" class="px-3 py-1 text-xs">
+                        {m.acknowledge()}
+                      </Button>
+                    </form>
+                  {/if}
+                  <Button
+                    variant="danger-soft"
+                    class="px-3 py-1 text-xs"
+                    onclick={() => (closing = c)}
+                  >
+                    {m.close_call()}
+                  </Button>
+                </div>
               {/if}
             </div>
-
-            {#if c.note}
-              <p class="mt-1 text-subtext">{c.note}</p>
-            {/if}
           </li>
         {/each}
       </ul>
@@ -211,7 +222,7 @@
   {/if}
 </section>
 
-<Dialog open={closing !== null} onclose={() => (closing = null)} title={m.confirm_close()}>
+<Dialog onclose={() => (closing = null)} open={closing !== null} title={m.confirm_close()}>
   {#if closing}
     <form
       id="close-call-form"

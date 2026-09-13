@@ -57,46 +57,11 @@
     {m.nav_overview()}
   </a>
 
-  <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-semibold tracking-tight num">{heading}</h1>
-      {#if r.room.name}
-        <p class="mt-1 text-subtext">{r.room.name}</p>
-      {/if}
-    </div>
-
-    <dl class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-      <div class="flex items-center gap-1.5">
-        <User aria-hidden="true" class="size-4 text-subtext" />
-        <dt class="sr-only">{m.occupant()}</dt>
-        <dd>
-          <button
-            type="button"
-            onclick={() => a.open(() => (managingStay = true))}
-            class="rounded underline-offset-2 hover:text-accent hover:underline"
-          >
-            {data.stay ? data.stay.user_display_name : m.room_empty()}
-          </button>
-        </dd>
-      </div>
-      <div class="flex items-center gap-1.5">
-        {#if offline}
-          <WifiOff class="size-4 text-overlay" aria-hidden="true" />
-        {:else}
-          <Wifi class="size-4 text-ok" aria-hidden="true" />
-        {/if}
-        <dt class="sr-only">{m.device()}</dt>
-        <dd class={offline ? 'text-subtext' : ''}>
-          {#if !r.device}
-            {m.device_none()}
-          {:else if offline}
-            {m.device_offline()}
-          {:else}
-            {m.device_online()}
-          {/if}
-        </dd>
-      </div>
-    </dl>
+  <div class="mt-3">
+    <h1 class="text-3xl font-semibold tracking-tight num">{heading}</h1>
+    {#if r.room.name}
+      <p class="mt-1 text-subtext">{r.room.name}</p>
+    {/if}
   </div>
 
   <div class="mt-6 grid gap-4 sm:grid-cols-2">
@@ -135,8 +100,70 @@
     {/if}
   </div>
 
-  <div class="mt-8 grid gap-8 lg:grid-cols-2">
-    <AlarmList alarms={r.open_alarms} />
+  <section aria-labelledby="room-info-heading" class="mt-8">
+    <div class="flex items-center gap-3">
+      <h2 class="text-lg font-semibold" id="room-info-heading">{m.room_info()}</h2>
+      <span aria-hidden="true" class="h-px flex-1 bg-surface-0"></span>
+    </div>
+
+    <div class="mt-3 grid gap-4 sm:grid-cols-2">
+      <div
+        class="flex items-center justify-between gap-3 rounded-2xl bg-canvas p-4 ring-1 ring-surface-0"
+      >
+        <div class="flex min-w-0 items-center gap-3">
+          <User aria-hidden="true" class="size-5 shrink-0 text-subtext" />
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-subtext">{m.occupant()}</p>
+            {#if data.stay}
+              <p class="truncate font-medium">{data.stay.user_display_name}</p>
+              <p class="text-xs text-subtext num">
+                {m.checked_in_at()}
+                {fmtDateTime(data.stay.checked_in_at)}
+              </p>
+            {:else}
+              <p class="text-subtext">{m.room_empty()}</p>
+            {/if}
+          </div>
+        </div>
+        <Button
+          variant="accent-soft"
+          class="shrink-0 px-3 py-1 text-xs"
+          onclick={() => a.open(() => (managingStay = true))}
+        >
+          {m.manage()}
+        </Button>
+      </div>
+
+      <div class="flex items-center gap-3 rounded-2xl bg-canvas p-4 ring-1 ring-surface-0">
+        {#if offline}
+          <WifiOff class="size-5 shrink-0 text-overlay" aria-hidden="true" />
+        {:else}
+          <Wifi class="size-5 shrink-0 text-ok" aria-hidden="true" />
+        {/if}
+        <div class="min-w-0">
+          <p class="text-xs font-medium text-subtext">{m.device()}</p>
+          <p class={offline ? 'text-subtext' : 'font-medium'}>
+            {#if !r.device}
+              {m.device_none()}
+            {:else if offline}
+              {m.device_offline()}
+            {:else}
+              {m.device_online()}
+            {/if}
+          </p>
+          {#if r.device?.last_seen_at}
+            <p class="text-xs text-subtext num">
+              {m.last_seen()}
+              {fmtDateTime(r.device.last_seen_at)}
+            </p>
+          {/if}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-8 grid gap-8 xl:grid-cols-2">
+    <AlarmList alarms={data.alarms} />
     <CallList calls={data.calls} />
   </div>
 

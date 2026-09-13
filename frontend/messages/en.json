@@ -243,5 +243,10 @@
   "stay_conflict": "The room is already occupied, or the client is checked in elsewhere.",
   "checked_in_elsewhere": "Checked in to",
   "manage_occupant": "Room occupant",
-  "change_occupant_help": "To change the occupant, check the current one out first."
+  "change_occupant_help": "To change the occupant, check the current one out first.",
+  "alarms_open_of_total": "Open alarms of total",
+  "open_lower": "open",
+  "room_info": "Room",
+  "manage": "Manage",
+  "last_seen": "Last seen"
 }
