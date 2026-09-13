@@ -290,5 +290,16 @@
   "audit_device_activated": "Enhed aktiveret",
   "audit_device_deleted": "Enhed slettet",
   "audit_threshold_updated": "Grænser ændret",
-  "audit_threshold_removed": "Egne grænser fjernet"
+  "audit_threshold_removed": "Egne grænser fjernet",
+  "nav_patients": "Patienter",
+  "title_patients": "Patienter - SenseCare",
+  "patients": "Patienter",
+  "patients_none": "Ingen patienter oprettet.",
+  "patients_checked_in_of_total": "Indtjekkede patienter af i alt",
+  "search_patients": "Søg navn, brugernavn eller værelse",
+  "patient_create": "Ny patient",
+  "patient_edit": "Rediger patient",
+  "checked_in": "Indtjekket",
+  "not_checked_in_short": "Ikke indtjekket",
+  "check_in_help": "Vælg et ledigt værelse."
 }
