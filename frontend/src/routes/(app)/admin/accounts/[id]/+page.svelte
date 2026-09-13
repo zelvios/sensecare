@@ -1,7 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { resolve } from '$app/paths';
-  import { ArrowLeft } from '@lucide/svelte';
+  import { ArrowLeft, Check, Copy } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
   import Button from '$lib/components/ui/Button.svelte';
   import Dialog from '$lib/components/ui/Dialog.svelte';
@@ -18,6 +18,14 @@
   let editing = $state(false);
   let changingPassword = $state(false);
   const isSelf = $derived(data.account.id === data.user.id);
+
+  let copied = $state(false);
+
+  async function copyId() {
+    await navigator.clipboard.writeText(data.account.id);
+    copied = true;
+    setTimeout(() => (copied = false), 1500);
+  }
 
   const roleLabel: Record<Role, () => string> = {
     client: m.role_client,
@@ -46,7 +54,7 @@
   <title>{data.account.display_name} - SenseCare</title>
 </svelte:head>
 
-<div class="min-h-0 flex-1 overflow-y-auto p-1">
+<div>
   <a
     class="inline-flex items-center gap-1 text-sm text-subtext hover:text-text"
     href={resolve('/admin/accounts')}
@@ -69,6 +77,21 @@
         >
           {data.account.is_active ? m.active() : m.inactive()}
         </span>
+      </p>
+      <p class="mt-1 flex items-center gap-1.5 text-xs text-subtext">
+        <span class="break-all num" title={m.account_id()}>{data.account.id}</span>
+        <button
+          type="button"
+          onclick={copyId}
+          aria-label={m.copy_id()}
+          class="shrink-0 rounded p-1 text-overlay hover:bg-surface-0/60 hover:text-text"
+        >
+          {#if copied}
+            <Check class="size-3.5 text-ok" aria-hidden="true" />
+          {:else}
+            <Copy class="size-3.5" aria-hidden="true" />
+          {/if}
+        </button>
       </p>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -116,18 +139,18 @@
       <span class="text-sm text-subtext num">{data.about.length}</span>
     </div>
     <div class="mt-3">
-      <AuditList entries={[...data.about].reverse()} empty={m.audit_none()} />
+      <AuditList entries={[...data.about].reverse()} actors={data.actors} empty={m.audit_none()} />
     </div>
   </section>
 
   <section aria-labelledby="by-heading" class="mt-8">
     <div class="flex items-center gap-3">
-      <h2 class="text-lg font-semibold" id="by-heading">{m.audit_by()}</h2>
+      <h2 class="text-lg font-semibold" id="by-heading">{m.audit_by_account()}</h2>
       <span class="h-px flex-1 bg-surface-0" aria-hidden="true"></span>
       <span class="text-sm text-subtext num">{data.by.length}</span>
     </div>
     <div class="mt-3">
-      <AuditList entries={data.by} empty={m.audit_none()} />
+      <AuditList entries={data.by} actors={data.actors} empty={m.audit_none()} />
     </div>
   </section>
 </div>
@@ -143,9 +166,9 @@
   </form>
   {@render errorLine()}
   {#snippet footer()}
-    <Button variant="secondary" onclick={() => a.close(() => (editing = false))}
-      >{m.cancel()}</Button
-    >
+    <Button variant="secondary" onclick={() => a.close(() => (editing = false))}>
+      {m.cancel()}
+    </Button>
     <Button type="submit" form="user-edit">{m.save()}</Button>
   {/snippet}
 </Dialog>

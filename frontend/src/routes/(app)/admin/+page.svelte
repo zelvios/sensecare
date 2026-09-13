@@ -8,6 +8,7 @@
     { href: resolve('/admin/accounts'), title: m.admin_accounts(), text: m.admin_accounts_text() },
     { href: resolve('/staff/alarms'), title: m.alarms(), text: m.admin_alarms_text() },
     { href: resolve('/admin/devices'), title: m.admin_devices(), text: m.admin_devices_text() },
+    { href: resolve('/admin/audit'), title: m.admin_audit(), text: m.admin_audit_text() },
     {
       href: resolve('/admin/thresholds'),
       title: m.admin_thresholds(),

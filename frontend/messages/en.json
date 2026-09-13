@@ -301,5 +301,16 @@
   "patient_edit": "Edit patient",
   "checked_in": "Checked in",
   "not_checked_in_short": "Not checked in",
-  "check_in_help": "Choose an available room."
+  "check_in_help": "Choose an available room.",
+  "title_admin_audit": "History - SenseCare",
+  "admin_audit": "History",
+  "admin_audit_text": "The whole system's change log, newest first.",
+  "audit_actor_id": "Performed by (account id)",
+  "apply_filter": "Filter",
+  "audit_range": "Entries",
+  "audit_newer": "Newer",
+  "audit_older": "Older",
+  "audit_by_account": "Actions by:",
+  "audit_system": "system",
+  "account_id": "Account id"
 }
