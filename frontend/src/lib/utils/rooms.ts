@@ -1,7 +1,12 @@
 import * as m from '$lib/paraglide/messages';
 
 /** The fields the search looks at. Both `Room` and `RoomOverview['room']` satisfy this. */
-export type RoomLike = { room_number: string; name?: string | null; floor?: number | null };
+export type RoomLike = {
+  id: string;
+  room_number: string;
+  name?: string | null;
+  floor?: number | null;
+};
 
 export type FloorFilter = 'all' | number;
 
@@ -37,7 +42,10 @@ export function filterRooms<T extends RoomLike>(
   return onFloor.filter((r) => {
     const f = r.floor == null ? '' : String(r.floor);
     return (
-      f === q || r.room_number.toLowerCase().includes(q) || (r.name ?? '').toLowerCase().includes(q)
+      f === q ||
+      r.id.toLowerCase().startsWith(q) ||
+      r.room_number.toLowerCase().includes(q) ||
+      (r.name ?? '').toLowerCase().includes(q)
     );
   });
 }

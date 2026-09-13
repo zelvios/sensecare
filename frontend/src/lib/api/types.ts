@@ -23,6 +23,9 @@ export type AuditEntry = S['AuditEntry'];
 
 export type Room = S['Room'];
 
+export type Device = S['DeviceResponse'];
+export type DeviceWithKey = S['DeviceWithKeyResponse'];
+
 /** History periods offered in the UI, in hours. */
 export const PERIOD_HOURS = [24, 3 * 24, 7 * 24] as const;
 export type PeriodHours = (typeof PERIOD_HOURS)[number];

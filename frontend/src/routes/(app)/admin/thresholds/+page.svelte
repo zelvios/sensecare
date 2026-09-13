@@ -8,7 +8,7 @@
   import { fmtDateTime, fmtHumidity, fmtTemp } from '$lib/utils/format';
   import { actionState } from '$lib/utils/forms.svelte';
   import ThresholdForm from './ThresholdForm.svelte';
-  import RoomPicker from './RoomPicker.svelte';
+  import RoomPicker from '$lib/components/rooms/RoomPicker.svelte';
   import type { Room, Threshold } from '$lib/api/types';
 
   let { data } = $props();

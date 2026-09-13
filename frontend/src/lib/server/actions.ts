@@ -14,3 +14,13 @@ export async function act(fn: () => Promise<unknown>) {
     throw e;
   }
 }
+
+/** Like act, but returns the API response so the page can show it (e.g. a device key). */
+export async function actWith<T>(fn: () => Promise<T>) {
+  try {
+    return { ok: true, data: await fn() };
+  } catch (e) {
+    if (e instanceof ApiError) return fail(e.status, { error: e.code });
+    throw e;
+  }
+}

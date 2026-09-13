@@ -12,6 +12,7 @@
   import RoomForm from './RoomForm.svelte';
   import ClientPicker from '$lib/components/rooms/ClientPicker.svelte';
   import type { Room } from '$lib/api/types';
+  import { page } from '$app/state';
 
   let { data } = $props();
 
@@ -21,7 +22,7 @@
   const dialogOpen = $derived(creating || editing !== null || deleting !== null);
   const stayOf = (r: Room) => data.staysByRoom[r.id] ?? null;
 
-  let query = $state('');
+  let query = $state(page.url.searchParams.get('q') ?? '');
   let floor = $state<FloorFilter>('all');
 
   const floors = $derived(floorsOf(data.rooms));

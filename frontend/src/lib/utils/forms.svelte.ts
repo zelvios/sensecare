@@ -1,4 +1,4 @@
-type EnhanceResult = { type: string; data?: { error?: string } };
+type EnhanceResult = { type: string; data?: { error?: string; data?: unknown } };
 type Callback = (args: { update: () => Promise<void>; result: EnhanceResult }) => Promise<void>;
 
 export function actionState() {
@@ -9,12 +9,12 @@ export function actionState() {
       return error;
     },
     track:
-      (onSuccess?: () => void) =>
+      (onSuccess?: (data: unknown) => void) =>
       (): Callback =>
       async ({ update, result }) => {
         await update();
         error = result.type === 'failure' ? (result.data?.error ?? 'unknown') : null;
-        if (result.type === 'success') onSuccess?.();
+        if (result.type === 'success') onSuccess?.(result.data?.data);
       },
     open(fn: () => void) {
       error = null;
