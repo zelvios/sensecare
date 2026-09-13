@@ -208,5 +208,15 @@
   "search_room_picker": "Search id, number, name or floor",
   "device_timing": "Device timing",
   "pressed_at": "Pressed",
-  "latency": "Latency"
+  "latency": "Latency",
+  "error_404_title": "Page not found",
+  "error_404_text": "The address is wrong, or the page has moved.",
+  "error_403_title": "No access",
+  "error_403_text": "Your account does not have permission for this page.",
+  "error_401_title": "Please log in",
+  "error_401_text": "Your session has expired, or you are not logged in.",
+  "error_500_title": "Something went wrong",
+  "error_500_text": "Try again in a moment. If it happens again, contact the administrator.",
+  "go_back": "Back",
+  "go_home": "Home"
 }
