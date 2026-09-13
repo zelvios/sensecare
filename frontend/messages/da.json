@@ -208,5 +208,15 @@
   "search_room_picker": "Søg id, nummer, navn eller etage",
   "device_timing": "Enhedstider",
   "pressed_at": "Trykket",
-  "latency": "Forsinkelse"
+  "latency": "Forsinkelse",
+  "error_404_title": "Siden findes ikke",
+  "error_404_text": "Adressen er forkert, eller siden er flyttet.",
+  "error_403_title": "Ingen adgang",
+  "error_403_text": "Din konto har ikke rettigheder til denne side.",
+  "error_401_title": "Log ind først",
+  "error_401_text": "Din session er udløbet, eller du er ikke logget ind.",
+  "error_500_title": "Noget gik galt",
+  "error_500_text": "Prøv igen om et øjeblik. Sker det igen, så kontakt administratoren.",
+  "go_back": "Tilbage",
+  "go_home": "Til forsiden"
 }

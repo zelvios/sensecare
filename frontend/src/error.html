@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>%sveltekit.status% - SenseCare</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, sans-serif;
+        background: #e6e9ef;
+        color: #4c4f69;
+        text-align: center;
+      }
+      .status {
+        font-size: 5rem;
+        font-weight: 600;
+        color: #acb0be;
+        margin: 0;
+      }
+      p {
+        color: #6c6f85;
+      }
+      a {
+        color: #1e66f5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="status">%sveltekit.status%</p>
+      <h1>Something went wrong</h1>
+      <p>%sveltekit.error.message%</p>
+      <p><a href="/">Home</a></p>
+    </main>
+  </body>
+</html>

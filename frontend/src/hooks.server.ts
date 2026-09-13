@@ -1,16 +1,14 @@
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
-
-// Runs before every request. Turns the session cookie into event.locals.user
-// by asking the API, so pages never trust the cookie alone.
-import type { Handle } from '@sveltejs/kit';
-
 import { api, ApiError } from '$lib/server/api';
 import { clearSession, SESSION_COOKIE } from '$lib/server/session';
 import type { AuthenticatedUser } from '$lib/api/types';
 
-const originalHandle: Handle = async ({ event, resolve }) => {
+// Runs before every request. Turns the session cookie into event.locals.user
+// by asking the API, so pages never trust the cookie alone.
+const handleSession: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get(SESSION_COOKIE) ?? null;
 
   event.locals.token = token;
@@ -51,4 +49,12 @@ const handleParaglide: Handle = ({ event, resolve }) =>
     });
   });
 
-export const handle = sequence(originalHandle, handleParaglide);
+export const handle = sequence(handleSession, handleParaglide);
+
+// Shapes what page.error.message shows on the error page. ApiError carries the
+// API's message. Anything else is logged and hidden behind a generic text.
+export const handleError: HandleServerError = ({ error, status, message }) => {
+  if (error instanceof ApiError) return { message: error.message };
+  if (status !== 404) console.error(error);
+  return { message };
+};
