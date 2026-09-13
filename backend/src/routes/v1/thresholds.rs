@@ -1,8 +1,9 @@
 //! Rules and audit live in services::thresholds.
 //! Room endpoints are in rooms.rs: GET/PUT/DELETE /rooms/{id}/thresholds.
 //!
-//! GET  /api/v1/thresholds     global default          ViewAllRooms
-//! PUT  /api/v1/thresholds     replace global default  ManageThresholds
+//! GET  /api/v1/thresholds        global default              ViewAllRooms
+//! PUT  /api/v1/thresholds        replace global default      ManageThresholds
+//! GET  /api/v1/thresholds/rooms  all room overrides          ViewAllRooms
 
 use axum::{Json, extract::State};
 use bigdecimal::ToPrimitive;
@@ -21,7 +22,9 @@ use crate::{
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
-    OpenApiRouter::new().routes(routes!(get_global, set_global))
+    OpenApiRouter::new()
+        .routes(routes!(get_global, set_global))
+        .routes(routes!(list_overrides))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -113,4 +116,26 @@ async fn set_global(
         t,
         ThresholdSource::Global,
     )))
+}
+
+/// All room overrides. Rooms not listed here use the global default.
+#[utoipa::path(
+    get, path = "/rooms", tag = "thresholds", operation_id = "list_threshold_overrides",
+    responses(
+        (status = 200, body = Vec<ThresholdResponse>),
+        (status = 403, body = ErrorResponse),
+    ),
+    security(("bearer" = []))
+)]
+async fn list_overrides(
+    State(state): State<AppState>,
+    CurrentUser(actor): CurrentUser,
+) -> Result<Json<Vec<ThresholdResponse>>, ApiError> {
+    let mut conn = state.pool.get().await?;
+    let rows = thresholds::list_overrides(&mut conn, &actor).await?;
+    Ok(Json(
+        rows.into_iter()
+            .map(|t| ThresholdResponse::from_threshold(t, ThresholdSource::Room))
+            .collect(),
+    ))
 }

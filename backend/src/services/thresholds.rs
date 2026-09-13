@@ -198,6 +198,14 @@ fn validate(l: Limits) -> Result<ThresholdValues, ApiError> {
     })
 }
 
+pub async fn list_overrides(
+    conn: &mut DbConn,
+    actor: &AuthenticatedUser,
+) -> Result<Vec<ClimateThreshold>, ApiError> {
+    actor.require(Permission::ViewAllRooms)?;
+    Ok(repos::thresholds::list_overrides(conn).await?)
+}
+
 fn snapshot(t: &ClimateThreshold) -> serde_json::Value {
     json!({
         "temperature_min": t.temperature_min.to_string(),
