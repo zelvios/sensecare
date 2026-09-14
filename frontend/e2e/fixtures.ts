@@ -60,6 +60,9 @@ export async function adminApi() {
   const headers = { authorization: `Bearer ${token}` };
   return {
     post: (path: string, data?: unknown) => api.post(`/api/v1${path}`, { headers, data }),
+    get: (path: string) => api.get(`/api/v1${path}`, { headers }),
+    getAs: (token: string, path: string) =>
+      api.get(`/api/v1${path}`, { headers: { authorization: `Bearer ${token}` } }),
     device: (id: string, key: string) => ({
       post: (path: string, data?: unknown) =>
         api.post(`/api/v1${path}`, { headers: { 'x-device-id': id, 'x-device-key': key }, data })

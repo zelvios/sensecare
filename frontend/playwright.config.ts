@@ -1,6 +1,12 @@
 import process from 'node:process';
 import { defineConfig, devices } from '@playwright/test';
 
+try {
+  process.loadEnvFile('.env');
+} catch {
+  // No .env file, the defaults in fixtures.ts apply.
+}
+
 export default defineConfig({
   testDir: 'e2e',
   testMatch: '**/*.e2e.ts',
