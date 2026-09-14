@@ -315,5 +315,12 @@
   "account_id": "Konto-id",
   "edit_limits": "Rediger grænser",
   "limits_edit_room_help": "Værelset har egne grænser. Ændringer gælder kun dette værelse.",
-  "limits_edit_global_help": "Værelset bruger standardgrænserne. Gemmer du her, får værelset egne grænser."
+  "limits_edit_global_help": "Værelset bruger standardgrænserne. Gemmer du her, får værelset egne grænser.",
+  "stays": "Ophold",
+  "stays_none": "Ingen ophold registreret.",
+  "stay_ended": "Afsluttet",
+  "checked_out_at": "Udtjekket",
+  "unit_days": "d",
+  "unit_hours": "t",
+  "unit_minutes": "min"
 }

@@ -1,21 +1,23 @@
 import type { Actions, PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { api, apiAll } from '$lib/server/api';
 import { act } from '$lib/server/actions';
-import type { AuditEntry, User } from '$lib/api/types';
+import type { AuditEntry, Stay, User } from '$lib/api/types';
 
 export const load: PageServerLoad = async ({ locals, params, fetch }) => {
   const token = locals.token;
-  const [account, about, by, users] = await Promise.all([
+  const [account, about, by, users, stays] = await Promise.all([
     api<User>(`/users/${params.id}`, { token, fetch }),
     api<AuditEntry[]>(`/audit-log/user/${params.id}`, { token, fetch }),
     api<AuditEntry[]>(`/audit-log?actor_id=${params.id}&limit=100`, { token, fetch }),
-    api<User[]>('/users?limit=200', { token, fetch })
+    apiAll<User>('/users', { token, fetch }),
+    api<Stay[]>(`/stays?user_id=${params.id}&limit=50`, { token, fetch })
   ]);
   return {
     account,
     about,
     by,
-    actors: Object.fromEntries(users.map((u) => [u.id, u.display_name]))
+    actors: Object.fromEntries(users.map((u) => [u.id, u.display_name])),
+    stays
   };
 };
 

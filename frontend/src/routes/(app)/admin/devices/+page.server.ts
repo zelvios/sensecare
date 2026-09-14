@@ -1,13 +1,13 @@
 import type { Actions, PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { api, apiAll } from '$lib/server/api';
 import { act, actWith } from '$lib/server/actions';
 import type { Device, DeviceWithKey, Room } from '$lib/api/types';
 
 export const load: PageServerLoad = async ({ locals, fetch }) => {
   const token = locals.token;
   const [devices, rooms] = await Promise.all([
-    api<Device[]>('/devices?limit=200', { token, fetch }),
-    api<Room[]>('/rooms?limit=200', { token, fetch })
+    apiAll<Device>('/devices', { token, fetch }),
+    apiAll<Room>('/rooms', { token, fetch })
   ]);
   return { devices, rooms, loadedAt: new Date().toISOString() };
 };

@@ -1,14 +1,14 @@
 import type { Actions, PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { api, apiAll } from '$lib/server/api';
 import { act } from '$lib/server/actions';
 import type { Room, Stay, User } from '$lib/api/types';
 
 export const load: PageServerLoad = async ({ locals, fetch }) => {
   const token = locals.token;
   const [rooms, stays, clients] = await Promise.all([
-    api<Room[]>('/rooms?limit=200', { token, fetch }),
-    api<Stay[]>('/stays?open=true&limit=200', { token, fetch }),
-    api<User[]>('/users?role=client&active=true&limit=200', { token, fetch })
+    apiAll<Room>('/rooms', { token, fetch }),
+    apiAll<Stay>('/stays?open=true', { token, fetch }),
+    apiAll<User>('/users?role=client&active=true', { token, fetch })
   ]);
   const staysByRoom = Object.fromEntries(stays.map((s) => [s.room_id, s]));
   const occupiedIn = Object.fromEntries(stays.map((s) => [s.user_id, s.room_number]));

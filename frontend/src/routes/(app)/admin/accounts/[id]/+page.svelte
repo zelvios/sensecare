@@ -7,6 +7,7 @@
   import Dialog from '$lib/components/ui/Dialog.svelte';
   import Input from '$lib/components/ui/Input.svelte';
   import AuditList from '$lib/components/audit/AuditList.svelte';
+  import StayList from '$lib/components/rooms/StayList.svelte';
   import { fmtDateTime } from '$lib/utils/format';
   import { actionState } from '$lib/utils/forms.svelte';
   import UserForm from '../UserForm.svelte';
@@ -131,6 +132,12 @@
       </dd>
     </div>
   </dl>
+
+  {#if data.account.role === 'client'}
+    <div class="mt-8">
+      <StayList stays={data.stays} show="room" linkTarget="room" />
+    </div>
+  {/if}
 
   <section aria-labelledby="about-heading" class="mt-8">
     <div class="flex items-center gap-3">

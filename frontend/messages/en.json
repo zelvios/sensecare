@@ -315,5 +315,12 @@
   "account_id": "Account id",
   "edit_limits": "Edit limits",
   "limits_edit_room_help": "This room has custom limits. Changes apply to this room only.",
-  "limits_edit_global_help": "This room uses the default limits. Saving here gives the room custom limits."
+  "limits_edit_global_help": "This room uses the default limits. Saving here gives the room custom limits.",
+  "stays": "Stays",
+  "stays_none": "No stays recorded.",
+  "stay_ended": "Ended",
+  "checked_out_at": "Checked out",
+  "unit_days": "d",
+  "unit_hours": "h",
+  "unit_minutes": "min"
 }
