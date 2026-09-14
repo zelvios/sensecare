@@ -7,7 +7,7 @@
   import Dialog from '$lib/components/ui/Dialog.svelte';
   import { fmtDateTime, fmtHumidity, fmtTemp } from '$lib/utils/format';
   import { actionState } from '$lib/utils/forms.svelte';
-  import ThresholdForm from './ThresholdForm.svelte';
+  import ThresholdForm from '$lib/components/rooms/ThresholdForm.svelte';
   import RoomPicker from '$lib/components/rooms/RoomPicker.svelte';
   import type { Room, Threshold } from '$lib/api/types';
 

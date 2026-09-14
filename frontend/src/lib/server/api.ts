@@ -41,3 +41,18 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
   }
   return data as T;
 }
+
+/** Fetches every page of a list endpoint. For admin tables that filter client-side. */
+export async function apiAll<T>(
+  path: string,
+  opts: { token?: string | null; fetch?: typeof fetch } = {},
+  pageSize = 200
+): Promise<T[]> {
+  const sep = path.includes('?') ? '&' : '?';
+  const all: T[] = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await api<T[]>(`${path}${sep}limit=${pageSize}&offset=${offset}`, opts);
+    all.push(...page);
+    if (page.length < pageSize) return all;
+  }
+}
