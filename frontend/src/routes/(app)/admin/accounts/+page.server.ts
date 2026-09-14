@@ -1,10 +1,10 @@
 import type { Actions, PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { api, apiAll } from '$lib/server/api';
 import { act } from '$lib/server/actions';
 import type { User } from '$lib/api/types';
 
 export const load: PageServerLoad = async ({ locals, fetch }) => {
-  const users = await api<User[]>('/users?limit=200', { token: locals.token, fetch });
+  const users = await apiAll<User>('/users', { token: locals.token, fetch });
   return { users };
 };
 

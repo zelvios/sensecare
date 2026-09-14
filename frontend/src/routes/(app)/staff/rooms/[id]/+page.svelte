@@ -12,12 +12,15 @@
   import PeriodPicker from '$lib/components/rooms/PeriodPicker.svelte';
   import HistoryTable from '$lib/components/rooms/HistoryTable.svelte';
   import ClientPicker from '$lib/components/rooms/ClientPicker.svelte';
+  import ThresholdForm from '$lib/components/rooms/ThresholdForm.svelte';
   import CallList from './CallList.svelte';
   import AlarmList from './AlarmList.svelte';
 
   let { data } = $props();
   const a = actionState();
   let managingStay = $state(false);
+  let editingLimits = $state(false);
+  const dialogOpen = $derived(managingStay || editingLimits);
 
   const r = $derived(data.room);
   const floor = $derived(r.room.floor ?? null);
@@ -33,6 +36,8 @@
   const errorText = $derived.by(() => {
     if (!a.error) return null;
     if (a.error === 'conflict') return m.stay_conflict();
+    if (a.error === 'bad_request' || a.error === 'constraint_violation')
+      return m.threshold_invalid();
     return m.action_failed();
   });
 
@@ -43,6 +48,14 @@
     return () => clearInterval(id);
   });
 </script>
+
+{#snippet errorLine()}
+  {#if errorText}
+    <p class="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
+      {errorText}
+    </p>
+  {/if}
+{/snippet}
 
 <svelte:head>
   <title>{m.room_heading()} {r.room.room_number} - SenseCare</title>
@@ -63,6 +76,10 @@
       <p class="mt-1 text-subtext">{r.room.name}</p>
     {/if}
   </div>
+
+  {#if !dialogOpen}
+    {@render errorLine()}
+  {/if}
 
   <div class="mt-6 grid gap-4 sm:grid-cols-2">
     <ReadingCard
@@ -93,9 +110,20 @@
       <p class="num">{m.last_reading()} {fmtDateTime(data.latest.measured_at)}</p>
     {/if}
     {#if data.thresholds}
-      <p>
-        {m.limits_source()}:
-        {data.thresholds.source === 'room' ? m.limits_room() : m.limits_global()}
+      <p class="flex items-center gap-2">
+        <span>
+          {m.limits_source()}:
+          {data.thresholds.source === 'room' ? m.limits_room() : m.limits_global()}
+        </span>
+        {#if data.canManage}
+          <Button
+            variant="accent-soft"
+            class="px-2.5 py-0.5 text-xs"
+            onclick={() => a.open(() => (editingLimits = true))}
+          >
+            {m.edit_limits()}
+          </Button>
+        {/if}
       </p>
     {/if}
   </div>
@@ -204,11 +232,7 @@
       <ClientPicker clients={data.clients} occupiedIn={data.occupiedIn} />
     </form>
   {/if}
-  {#if errorText}
-    <p class="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
-      {errorText}
-    </p>
-  {/if}
+  {@render errorLine()}
   {#snippet footer()}
     <Button variant="secondary" onclick={() => a.close(() => (managingStay = false))}>
       {m.close()}
@@ -216,5 +240,49 @@
     {#if !data.stay && r.room.is_active}
       <Button type="submit" variant="ok-soft" form="stay-checkin">{m.check_in()}</Button>
     {/if}
+  {/snippet}
+</Dialog>
+
+<Dialog
+  open={editingLimits}
+  onclose={() => a.close(() => (editingLimits = false))}
+  title={m.edit_limits()}
+>
+  {#if data.thresholds}
+    <form
+      id="room-limits"
+      method="POST"
+      action="?/setThresholds"
+      use:enhance={a.track(() => (editingLimits = false))}
+    >
+      <p class="text-subtext">
+        {data.thresholds.source === 'room'
+          ? m.limits_edit_room_help()
+          : m.limits_edit_global_help()}
+      </p>
+      <div class="mt-3">
+        <ThresholdForm values={data.thresholds} />
+      </div>
+    </form>
+    {#if data.thresholds.source === 'room'}
+      <form
+        id="room-limits-clear"
+        method="POST"
+        action="?/clearThresholds"
+        use:enhance={a.track(() => (editingLimits = false))}
+      ></form>
+    {/if}
+  {/if}
+  {@render errorLine()}
+  {#snippet footer()}
+    <Button variant="secondary" onclick={() => a.close(() => (editingLimits = false))}>
+      {m.cancel()}
+    </Button>
+    {#if data.thresholds?.source === 'room'}
+      <Button type="submit" variant="warn-soft" form="room-limits-clear">
+        {m.threshold_delete()}
+      </Button>
+    {/if}
+    <Button type="submit" form="room-limits">{m.save()}</Button>
   {/snippet}
 </Dialog>

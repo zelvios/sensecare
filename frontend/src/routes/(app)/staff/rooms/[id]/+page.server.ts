@@ -111,5 +111,22 @@ export const actions: Actions = {
     return act(() =>
       api(`/stays/${stayId}/check-out`, { method: 'POST', token: locals.token, fetch })
     );
-  }
+  },
+  setThresholds: async ({ request, locals, params, fetch }) => {
+    const form = await request.formData();
+    const num = (k: string) => Number(String(form.get(k) ?? '').replace(',', '.'));
+    const body = {
+      temperature_min: num('temperature_min'),
+      temperature_max: num('temperature_max'),
+      humidity_min: num('humidity_min'),
+      humidity_max: num('humidity_max')
+    };
+    return act(() =>
+      api(`/rooms/${params.id}/thresholds`, { method: 'PUT', body, token: locals.token, fetch })
+    );
+  },
+  clearThresholds: async ({ locals, params, fetch }) =>
+    act(() =>
+      api(`/rooms/${params.id}/thresholds`, { method: 'DELETE', token: locals.token, fetch })
+    )
 };

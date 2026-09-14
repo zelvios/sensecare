@@ -1,14 +1,14 @@
 import type { Actions, PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { api, apiAll } from '$lib/server/api';
 import { act } from '$lib/server/actions';
 import type { Room, Stay, User } from '$lib/api/types';
 
 export const load: PageServerLoad = async ({ locals, fetch }) => {
   const token = locals.token;
   const [patients, stays, rooms] = await Promise.all([
-    api<User[]>('/users?role=client&limit=200', { token, fetch }),
-    api<Stay[]>('/stays?open=true&limit=200', { token, fetch }),
-    api<Room[]>('/rooms?active=true&limit=200', { token, fetch })
+    apiAll<User>('/users?role=client', { token, fetch }),
+    apiAll<Stay>('/stays?open=true', { token, fetch }),
+    apiAll<Room>('/rooms?active=true', { token, fetch })
   ]);
   const stayByUser = Object.fromEntries(stays.map((s) => [s.user_id, s]));
   const occupiedRoomIds = new Set(stays.map((s) => s.room_id));
