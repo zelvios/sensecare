@@ -13,6 +13,7 @@
   import HistoryTable from '$lib/components/rooms/HistoryTable.svelte';
   import ClientPicker from '$lib/components/rooms/ClientPicker.svelte';
   import ThresholdForm from '$lib/components/rooms/ThresholdForm.svelte';
+  import StayList from '$lib/components/rooms/StayList.svelte';
   import CallList from './CallList.svelte';
   import AlarmList from './AlarmList.svelte';
 
@@ -193,6 +194,14 @@
   <div class="mt-8 grid gap-8 xl:grid-cols-2">
     <AlarmList alarms={data.alarms} />
     <CallList calls={data.calls} />
+  </div>
+
+  <div class="mt-8">
+    <StayList
+      stays={data.roomStays}
+      show="patient"
+      linkTarget={data.canManage ? 'admin-account' : 'none'}
+    />
   </div>
 
   <div class="mt-8 flex items-center gap-3">

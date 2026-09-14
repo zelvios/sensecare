@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { api, apiAll } from '$lib/server/api';
 import { act } from '$lib/server/actions';
 import type { Room, Threshold } from '$lib/api/types';
 
@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
   const [global, overrides, rooms] = await Promise.all([
     api<Threshold>('/thresholds', { token, fetch }),
     api<Threshold[]>('/thresholds/rooms', { token, fetch }),
-    api<Room[]>('/rooms?limit=200', { token, fetch })
+    apiAll<Room>('/rooms', { token, fetch })
   ]);
   return { global, overrides, rooms };
 };
