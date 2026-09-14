@@ -47,6 +47,20 @@ export const actions: Actions = {
       })
     );
   },
+  simulateReading: async ({ request, fetch }) => {
+    const form = await request.formData();
+    const id = String(form.get('device_id') ?? '').trim();
+    const key = String(form.get('device_key') ?? '').trim();
+    const num = (k: string) => Number(String(form.get(k) ?? '').replace(',', '.'));
+    return act(() =>
+      api('/devices/measurements', {
+        method: 'POST',
+        headers: { 'x-device-id': id, 'x-device-key': key },
+        body: { temperature_c: num('temperature_c'), humidity_pct: num('humidity_pct') },
+        fetch
+      })
+    );
+  },
   rotateKey: async ({ request, locals, fetch }) => {
     const id = String((await request.formData()).get('id'));
     return actWith(() =>

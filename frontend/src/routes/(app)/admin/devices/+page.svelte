@@ -6,6 +6,7 @@
   import Button from '$lib/components/ui/Button.svelte';
   import Dialog from '$lib/components/ui/Dialog.svelte';
   import RoomPicker from '$lib/components/rooms/RoomPicker.svelte';
+  import Input from '$lib/components/ui/Input.svelte';
   import { fmtDateTime } from '$lib/utils/format';
   import { actionState } from '$lib/utils/forms.svelte';
   import DeviceForm from './DeviceForm.svelte';
@@ -22,6 +23,7 @@
   let editing = $state<Device | null>(null);
   let assigning = $state<Device | null>(null);
   let rotating = $state<Device | null>(null);
+  let simulating = $state<Device | null>(null);
   let deleting = $state<Device | null>(null);
   let revealed = $state<DeviceWithKey | null>(null);
   let copiedId = $state<string | null>(null);
@@ -31,6 +33,7 @@
       editing !== null ||
       assigning !== null ||
       rotating !== null ||
+      simulating !== null ||
       deleting !== null ||
       revealed !== null
   );
@@ -98,9 +101,10 @@
 
   const errorText = $derived.by(() => {
     if (!a.error) return null;
-    if (a.error === 'conflict') return m.device_room_taken();
+    if (a.error === 'unauthorized') return m.device_auth_failed();
+    if (a.error === 'conflict') return simulating ? m.device_unassigned() : m.device_room_taken();
     if (a.error === 'invalid_reference') return m.device_in_use();
-    if (a.error === 'bad_request') return m.device_invalid();
+    if (a.error === 'bad_request') return simulating ? m.reading_invalid() : m.device_invalid();
     return m.action_failed();
   });
 
@@ -315,6 +319,13 @@
                   class="px-3 py-1 text-xs"
                   onclick={() => a.open(() => (rotating = d))}>{m.device_rotate()}</Button
                 >
+                <Button
+                  variant="secondary"
+                  class="px-3 py-1 text-xs"
+                  onclick={() => a.open(() => (simulating = d))}
+                >
+                  {m.simulate_reading()}
+                </Button>
                 <form method="POST" action="?/deactivate" use:enhance={a.track()}>
                   <input type="hidden" name="id" value={d.id} />
                   <Button type="submit" variant="warn-soft" class="px-3 py-1 text-xs"
@@ -462,6 +473,63 @@
       >{m.cancel()}</Button
     >
     <Button type="submit" variant="danger" form="device-rotate">{m.device_rotate()}</Button>
+  {/snippet}
+</Dialog>
+
+<Dialog
+  open={simulating !== null}
+  onclose={() => a.close(() => (simulating = null))}
+  title={m.simulate_reading()}
+>
+  {#if simulating}
+    <form
+      id="device-simulate"
+      method="POST"
+      action="?/simulateReading"
+      use:enhance={a.track(() => (simulating = null))}
+    >
+      <input type="hidden" name="device_id" value={simulating.id} />
+      <p class="text-subtext">{m.simulate_reading_help()}</p>
+      <p class="mt-2 font-medium">{simulating.label || simulating.id.slice(0, 8)}</p>
+      <div class="mt-3 space-y-4">
+        <Input
+          label={m.device_key()}
+          name="device_key"
+          type="password"
+          required
+          autocomplete="off"
+        />
+        <div class="grid gap-4 sm:grid-cols-2">
+          <Input
+            label={m.temperature()}
+            name="temperature_c"
+            type="number"
+            step="0.1"
+            min={-40}
+            max={85}
+            required
+            value="21.5"
+          />
+          <Input
+            label={m.humidity()}
+            name="humidity_pct"
+            type="number"
+            step="0.1"
+            min={0}
+            max={100}
+            required
+            value="45"
+          />
+        </div>
+      </div>
+    </form>
+  {/if}
+  {@render errorLine()}
+  {#snippet footer()}
+    <Button variant="secondary" onclick={() => a.close(() => (simulating = null))}>
+      {m.cancel()}
+    </Button>
+    <Button type="submit" form="device-simulate">{m.send_reading()}</Button>
   {/snippet}
 </Dialog>
 

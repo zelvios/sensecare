@@ -64,6 +64,7 @@ export const load: PageServerLoad = async ({ locals, params, url, fetch }) => {
     clients,
     occupiedIn: Object.fromEntries(stays.map((s) => [s.user_id, s.room_number])),
     roomStays,
+    loadedAt: new Date().toISOString(),
     canManage: locals.user?.role === 'admin'
   };
 };

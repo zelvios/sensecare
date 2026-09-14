@@ -322,5 +322,11 @@
   "checked_out_at": "Udtjekket",
   "unit_days": "d",
   "unit_hours": "t",
-  "unit_minutes": "min"
+  "unit_minutes": "min",
+  "simulate_reading": "Simulér måling",
+  "simulate_reading_help": "Sender en måling som enheden ville gøre det. Værdier uden for grænserne udløser en alarm.",
+  "send_reading": "Send måling",
+  "reading_invalid": "Kontroller værdierne. Temperatur -40 til 85, luftfugtighed 0 til 100.",
+  "search_history": "Søg tidspunkt eller værdi",
+  "search_no_match_history": "Ingen målinger matcher."
 }
