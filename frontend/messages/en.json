@@ -322,5 +322,11 @@
   "checked_out_at": "Checked out",
   "unit_days": "d",
   "unit_hours": "h",
-  "unit_minutes": "min"
+  "unit_minutes": "min",
+  "simulate_reading": "Simulate reading",
+  "simulate_reading_help": "Sends a reading the way the device would. Values outside the limits raise an alarm.",
+  "send_reading": "Send reading",
+  "reading_invalid": "Check the values. Temperature -40 to 85, humidity 0 to 100.",
+  "search_history": "Search time or value",
+  "search_no_match_history": "No readings match."
 }

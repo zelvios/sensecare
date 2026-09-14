@@ -2,9 +2,9 @@
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { ArrowLeft, User, Wifi, WifiOff } from '@lucide/svelte';
+  import { ArrowLeft, RefreshCw, User, Wifi, WifiOff } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
-  import { fmtDateTime, fmtHumidity, fmtTemp } from '$lib/utils/format';
+  import { fmtDateTime, fmtDateTimeSec, fmtHumidity, fmtTemp } from '$lib/utils/format';
   import { actionState } from '$lib/utils/forms.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import Dialog from '$lib/components/ui/Dialog.svelte';
@@ -22,6 +22,16 @@
   let managingStay = $state(false);
   let editingLimits = $state(false);
   const dialogOpen = $derived(managingStay || editingLimits);
+  let refreshing = $state(false);
+
+  async function refresh() {
+    refreshing = true;
+    try {
+      await invalidateAll();
+    } finally {
+      refreshing = false;
+    }
+  }
 
   const r = $derived(data.room);
   const floor = $derived(r.room.floor ?? null);
@@ -44,7 +54,7 @@
 
   $effect(() => {
     const id = setInterval(() => {
-      if (document.visibilityState === 'visible') invalidateAll();
+      if (document.visibilityState === 'visible') refresh();
     }, 15_000);
     return () => clearInterval(id);
   });
@@ -71,11 +81,25 @@
     {m.nav_overview()}
   </a>
 
-  <div class="mt-3">
-    <h1 class="text-3xl font-semibold tracking-tight num">{heading}</h1>
-    {#if r.room.name}
-      <p class="mt-1 text-subtext">{r.room.name}</p>
-    {/if}
+  <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold tracking-tight num">{heading}</h1>
+      {#if r.room.name}
+        <p class="mt-1 text-subtext">{r.room.name}</p>
+      {/if}
+    </div>
+    <div class="flex items-center gap-2 text-sm text-subtext">
+      <span class="num">{m.updated_at()} {fmtDateTimeSec(data.loadedAt)}</span>
+      <button
+        aria-label={m.refresh()}
+        class="rounded-md p-1.5 transition hover:bg-surface-0/60 hover:text-text disabled:opacity-60"
+        disabled={refreshing}
+        onclick={refresh}
+        type="button"
+      >
+        <RefreshCw aria-hidden="true" class="size-4 {refreshing ? 'animate-spin' : ''}" />
+      </button>
+    </div>
   </div>
 
   {#if !dialogOpen}
