@@ -2,7 +2,7 @@
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { ArrowLeft, RefreshCw, User, Wifi, WifiOff } from '@lucide/svelte';
+  import { ArrowLeft, Droplets, RefreshCw, Thermometer, User, Wifi, WifiOff } from '@lucide/svelte';
   import * as m from '$lib/paraglide/messages';
   import { fmtDateTime, fmtDateTimeSec, fmtHumidity, fmtTemp } from '$lib/utils/format';
   import { actionState } from '$lib/utils/forms.svelte';
@@ -117,7 +117,11 @@
         ? `${fmtTemp(data.thresholds.temperature_min)} - ${fmtTemp(data.thresholds.temperature_max)}`
         : undefined}
       value={data.latest?.temperature_c ?? null}
-    />
+    >
+      {#snippet icon()}
+        <Thermometer class="size-4" aria-hidden="true" />
+      {/snippet}
+    </ReadingCard>
     <ReadingCard
       display={data.latest ? fmtHumidity(data.latest.humidity_pct) : '--'}
       label={m.humidity()}
@@ -128,7 +132,11 @@
         ? `${fmtHumidity(data.thresholds.humidity_min)} - ${fmtHumidity(data.thresholds.humidity_max)}`
         : undefined}
       value={data.latest?.humidity_pct ?? null}
-    />
+    >
+      {#snippet icon()}
+        <Droplets class="size-4" aria-hidden="true" />
+      {/snippet}
+    </ReadingCard>
   </div>
   <div class="mt-2 flex flex-wrap justify-between gap-x-6 gap-y-1 text-sm text-subtext">
     {#if data.latest}

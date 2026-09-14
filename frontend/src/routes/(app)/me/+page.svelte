@@ -54,6 +54,10 @@
       display={data.latest ? fmtTemp(data.latest.temperature_c) : '--'}
       min={data.thresholds?.temperature_min ?? -Infinity}
       max={data.thresholds?.temperature_max ?? Infinity}
+      margin={1}
+      range={data.thresholds
+        ? `${fmtTemp(data.thresholds.temperature_min)} - ${fmtTemp(data.thresholds.temperature_max)}`
+        : undefined}
     >
       {#snippet icon()}
         <Thermometer class="size-4" aria-hidden="true" />
@@ -65,6 +69,10 @@
       display={data.latest ? fmtHumidity(data.latest.humidity_pct) : '--'}
       min={data.thresholds?.humidity_min ?? -Infinity}
       max={data.thresholds?.humidity_max ?? Infinity}
+      margin={5}
+      range={data.thresholds
+        ? `${fmtHumidity(data.thresholds.humidity_min)} - ${fmtHumidity(data.thresholds.humidity_max)}`
+        : undefined}
     >
       {#snippet icon()}
         <Droplets class="size-4" aria-hidden="true" />
