@@ -22,7 +22,7 @@ constexpr uint8_t LCD_ADDRESS = 0x27;
 constexpr uint8_t LCD_COLUMNS = 16;
 constexpr uint8_t LCD_ROWS = 2;
 
-constexpr char FIRMWARE_VERSION[] = "0.1.0";
+constexpr char FIRMWARE_VERSION[] = "1.0.0";
 
 // The DHT11 samples once per second at best. The display updates from this.
 constexpr unsigned long READ_INTERVAL_MS = 2000;
