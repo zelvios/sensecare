@@ -1,0 +1,37 @@
+# Production overlay. Use together with docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Removes the development port mappings so only Caddy is reachable from outside,
+# and terminates TLS in Caddy with a Let's Encrypt certificate.
+
+services:
+  db:
+    ports: !reset []
+
+  api:
+    ports: !reset []
+
+  web:
+    ports: !reset []
+    environment:
+      NODE_ENV: production
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: sensecare-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data      # certificates, so a restart does not request new ones
+      - caddy-config:/config
+    depends_on:
+      - web
+    networks:
+      - internal
+
+volumes:
+  caddy-data:
+  caddy-config:
