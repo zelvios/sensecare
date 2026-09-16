@@ -8,6 +8,15 @@ sensecare.jacob-j.com {
 		reverse_proxy api:8080
 	}
 
+	# API documentation, on for the demonstration. Would be off in real operation.
+	handle /swagger-ui* {
+		reverse_proxy api:8080
+	}
+
+	handle /api-docs/* {
+		reverse_proxy api:8080
+	}
+
 	handle {
 		reverse_proxy web:3000
 	}
