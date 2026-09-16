@@ -1,0 +1,16 @@
+{
+	email contact@jacob-j.com
+}
+
+sensecare.jacob-j.com {
+	# Room devices and the SvelteKit server reach the API here, under the same host.
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header Strict-Transport-Security "max-age=31536000"
+}
