@@ -1,5 +1,5 @@
 import process from 'node:process';
-import { defineConfig, devices } from '@playwright/test';
+import {defineConfig, devices} from '@playwright/test';
 
 try {
   process.loadEnvFile('.env');
@@ -11,8 +11,11 @@ export default defineConfig({
   testDir: 'e2e',
   testMatch: '**/*.e2e.ts',
   fullyParallel: true,
+  workers: process.env.CI ? undefined : 4,
+  timeout: 60_000,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  expect: { timeout: 10_000 },
   use: {
     baseURL: 'http://localhost:5173',
     locale: 'en-US',
@@ -23,8 +26,9 @@ export default defineConfig({
     { name: 'phone', use: { ...devices['Pixel 7'] } }
   ],
   webServer: {
-    command: 'pnpm dev',
+    command: 'vite dev',
     url: 'http://localhost:5173/healthz',
-    reuseExistingServer: !process.env.CI
+    reuseExistingServer: true,
+    timeout: 120_000
   }
 });

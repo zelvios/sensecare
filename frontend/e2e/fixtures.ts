@@ -33,7 +33,16 @@ async function createAccount(role: 'client' | 'staff'): Promise<Account> {
  * handlers, keeps loading for a moment after that under `vite dev`.
  */
 export async function goto(page: Page, path: string) {
-  await page.goto(path);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await page.goto(path);
+      break;
+    } catch (e) {
+      const refused = e instanceof Error && e.message.includes('ERR_CONNECTION_REFUSED');
+      if (!refused || attempt === 3) throw e;
+      await page.waitForTimeout(1000);
+    }
+  }
   await page.waitForLoadState('networkidle');
 }
 
